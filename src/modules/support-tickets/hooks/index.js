@@ -1,2 +1,1 @@
-// support-tickets/hooks placeholder
-// Add support-tickets-related hooks here.
+export { useSupportTickets } from "./useSupportTickets";

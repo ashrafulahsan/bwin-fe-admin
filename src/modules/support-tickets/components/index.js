@@ -1,2 +1,3 @@
-// support-tickets/components placeholder
-// Add support-tickets-related components here.
+export { default as SupportTicketsPage } from "./SupportTicketsPage";
+export { default as TicketTable } from "./TicketTable";
+export { default as TicketDetailModal } from "./TicketDetailModal";
