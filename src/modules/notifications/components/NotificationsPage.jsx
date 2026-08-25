@@ -1,11 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui";
-import { StatCardsGrid, SearchFiltersBar, Toast } from "@/components/common";
+import { StatCardsGrid, SearchFiltersBar, Toast, UnderlineTabs } from "@/components/common";
 import { useAppStore } from "@/store/appStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useNotifications } from "../hooks";
-import NotificationTabs from "./NotificationTabs";
 import NotificationTable from "./NotificationTable";
 import NotificationDetailView from "./NotificationDetailView";
 import NotificationCreateModal from "./NotificationCreateModal";
@@ -31,7 +30,7 @@ export default function NotificationsPage() {
 
           <StatCardsGrid stats={n.stats} />
 
-          <NotificationTabs tabs={n.tabs} />
+          <UnderlineTabs tabs={n.tabs} />
 
           <SearchFiltersBar
             search={n.search}

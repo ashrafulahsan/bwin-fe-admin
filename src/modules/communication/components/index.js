@@ -1,3 +1,9 @@
 export { default as ContactFormsPage } from "./ContactFormsPage";
 export { default as ContactTable } from "./ContactTable";
 export { default as ContactDetailModal } from "./ContactDetailModal";
+export { default as NewsletterPage } from "./NewsletterPage";
+export { default as CampaignTable } from "./CampaignTable";
+export { default as SubscriberTable } from "./SubscriberTable";
+export { default as CampaignDetailView } from "./CampaignDetailView";
+export { default as CampaignComposeModal } from "./CampaignComposeModal";
+export { default as AddSubscriberModal } from "./AddSubscriberModal";

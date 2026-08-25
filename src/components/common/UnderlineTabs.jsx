@@ -1,6 +1,9 @@
 "use client";
 
-export default function NotificationTabs({ tabs }) {
+// Orange-underline tab row used above a filtered table (notifications'
+// origin tabs, newsletter's Campaigns/Subscribers tabs). `tabs` is
+// [{ key, label, active, onClick }].
+export default function UnderlineTabs({ tabs }) {
   return (
     <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap", borderBottom: "1px solid var(--border)" }}>
       {tabs.map((tab) => (

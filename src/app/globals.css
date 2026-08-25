@@ -53,3 +53,25 @@ a:hover {
   margin: 0 0 12px;
   padding-left: 20px;
 }
+
+.bwin-mail-body p {
+  margin: 0 0 14px;
+}
+.bwin-mail-body p:last-child {
+  margin-bottom: 0;
+}
+.bwin-mail-body h2,
+.bwin-mail-body h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 20px 0 8px;
+  color: var(--text-primary);
+}
+.bwin-mail-body ul,
+.bwin-mail-body ol {
+  margin: 0 0 14px;
+  padding-left: 20px;
+}
+.bwin-mail-body li {
+  margin-bottom: 6px;
+}

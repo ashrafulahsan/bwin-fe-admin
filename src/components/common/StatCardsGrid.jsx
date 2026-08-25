@@ -30,6 +30,9 @@ export default function StatCardsGrid({ stats, onSelect, activeKey }) {
             <div key={st.label} style={baseStyle}>
               <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>{st.label}</div>
               <div style={{ fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: "var(--fw-semibold)", color: "var(--text-primary)", marginTop: 4 }}>{st.value}</div>
+              {st.sub !== undefined && (
+                <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)", marginTop: 5 }}>{st.sub}</div>
+              )}
             </div>
           );
         }
@@ -45,6 +48,9 @@ export default function StatCardsGrid({ stats, onSelect, activeKey }) {
           >
             <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)", fontWeight: "var(--fw-medium)", marginBottom: 6 }}>{st.label}</div>
             <div style={{ fontFamily: "var(--font-mono)", fontSize: 24, fontWeight: "var(--fw-semibold)", color: "var(--text-primary)", lineHeight: 1 }}>{st.value}</div>
+            {st.sub !== undefined && (
+              <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)", marginTop: 5 }}>{st.sub}</div>
+            )}
           </button>
         );
       })}

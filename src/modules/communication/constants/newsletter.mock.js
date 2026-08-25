@@ -1,0 +1,192 @@
+// Client communication > Newsletter — campaigns + subscriber list. Mirrors
+// the Claude Design source (BWIN Consultants admin panel/data/newsletter.js).
+// Replace with modules/communication/services once the newsletter API exists.
+export const NEWSLETTER_STATUSES = ["draft", "scheduled", "sending", "sent"];
+
+export const NEWSLETTER_STATUS_LABELS = {
+  draft: "Draft",
+  scheduled: "Scheduled",
+  sending: "Sending",
+  sent: "Sent",
+};
+
+export const NEWSLETTER_STATUS_TONES = {
+  draft: "neutral",
+  scheduled: "info",
+  sending: "warning",
+  sent: "success",
+};
+
+export const NEWSLETTER_SEGMENTS = [
+  { value: "all", label: "All subscribers" },
+  { value: "students", label: "Students" },
+  { value: "clients", label: "Consultancy clients" },
+  { value: "automation", label: "Automation interest" },
+  { value: "prospects", label: "Prospects (no purchase)" },
+];
+
+export const NEWSLETTER_SUB_STATUSES = ["subscribed", "unsubscribed", "bounced", "pending"];
+
+export const NEWSLETTER_SUB_STATUS_LABELS = {
+  subscribed: "Subscribed",
+  unsubscribed: "Unsubscribed",
+  bounced: "Bounced",
+  pending: "Pending opt-in",
+};
+
+export const NEWSLETTER_SUB_STATUS_TONES = {
+  subscribed: "success",
+  unsubscribed: "neutral",
+  bounced: "error",
+  pending: "warning",
+};
+
+export const NEWSLETTER_SOURCES = ["Website footer", "Contact form", "Course checkout", "Imported", "Manual"];
+
+export const NEWSLETTER_CAMPAIGNS = [
+  {
+    id: "NL-1042",
+    subject: "Five hours a week back: what the invoice automation actually did",
+    preheader: "A short read on the numbers from one client's first month.",
+    segment: "all",
+    from_name: "BWIN Consultants",
+    from_email: "hello@bwinconsultants.com",
+    reply_to: "hello@bwinconsultants.com",
+    body:
+      "<p>Last month a logistics client asked us a simple question: how much time is invoicing costing us?</p><p>The answer was 22 hours a month, spread across two people re-typing order details. We connected the order form to their accounting system and the manual step disappeared.</p><h3>What changed</h3><ul><li>Invoices go out the same day, not Friday afternoon</li><li>Two people got their afternoons back</li><li>Late-payment follow-ups now send themselves</li></ul><p>If invoicing is eating your week, reply to this email and we will take a look.</p>",
+    status: "sent",
+    recipient_count: 2418,
+    delivered_count: 2391,
+    open_count: 1102,
+    click_count: 318,
+    unsubscribe_count: 11,
+    bounce_count: 27,
+    created_by: "Sade Balogun",
+    scheduled_at: null,
+    sent_at: "2026-08-20 09:00",
+    created_at: "2026-08-19 15:12",
+  },
+  {
+    id: "NL-1041",
+    subject: "September cohorts are open (evenings and weekends)",
+    preheader: "Data analytics, business automation, and operations — pick your schedule.",
+    segment: "students",
+    from_name: "BWIN Skill Development",
+    from_email: "learn@bwinconsultants.com",
+    reply_to: "learn@bwinconsultants.com",
+    body:
+      "<p>Registration for September is open. Every course runs in two schedules — Monday/Wednesday evenings or Saturday mornings — so you can keep working while you study.</p><p>Seats are capped at 24 per cohort so instructors can actually answer questions.</p>",
+    status: "sent",
+    recipient_count: 1284,
+    delivered_count: 1276,
+    open_count: 741,
+    click_count: 289,
+    unsubscribe_count: 4,
+    bounce_count: 8,
+    created_by: "Tobi Adeyemi",
+    scheduled_at: null,
+    sent_at: "2026-08-14 08:30",
+    created_at: "2026-08-13 11:40",
+  },
+  {
+    id: "NL-1043",
+    subject: "Your quarterly operations review checklist",
+    preheader: "Twelve questions worth asking before the quarter closes.",
+    segment: "clients",
+    from_name: "BWIN Consultants",
+    from_email: "hello@bwinconsultants.com",
+    reply_to: "priya@bwinconsultants.com",
+    body: "<p>Before Q3 closes, here is the checklist we walk through with every consultancy client. Work through it with your team — most of it takes an hour.</p>",
+    status: "scheduled",
+    recipient_count: 218,
+    delivered_count: 0,
+    open_count: 0,
+    click_count: 0,
+    unsubscribe_count: 0,
+    bounce_count: 0,
+    created_by: "Priya Raman",
+    scheduled_at: "2026-08-26 07:30",
+    sent_at: null,
+    created_at: "2026-08-22 16:55",
+  },
+  {
+    id: "NL-1044",
+    subject: "Automation ideas for small teams — draft",
+    preheader: "",
+    segment: "automation",
+    from_name: "BWIN Consultants",
+    from_email: "hello@bwinconsultants.com",
+    reply_to: "hello@bwinconsultants.com",
+    body: "<p>Outline only — three automations any five-person team can run in a week. Needs examples from the Bellini and Sahel projects before this goes out.</p>",
+    status: "draft",
+    recipient_count: 0,
+    delivered_count: 0,
+    open_count: 0,
+    click_count: 0,
+    unsubscribe_count: 0,
+    bounce_count: 0,
+    created_by: "Sade Balogun",
+    scheduled_at: null,
+    sent_at: null,
+    created_at: "2026-08-23 08:14",
+  },
+  {
+    id: "NL-1040",
+    subject: "We rebuilt the client portal — here is what moved",
+    preheader: "Projects, automations, and training in one place.",
+    segment: "all",
+    from_name: "BWIN Consultants",
+    from_email: "hello@bwinconsultants.com",
+    reply_to: "hello@bwinconsultants.com",
+    body: "<p>The portal has one home now. Your projects, automations, and course progress all live behind the same login — same email, same history.</p>",
+    status: "sent",
+    recipient_count: 2372,
+    delivered_count: 2344,
+    open_count: 1518,
+    click_count: 604,
+    unsubscribe_count: 19,
+    bounce_count: 28,
+    created_by: "Sade Balogun",
+    scheduled_at: null,
+    sent_at: "2026-08-06 09:00",
+    created_at: "2026-08-05 14:02",
+  },
+  {
+    id: "NL-1039",
+    subject: "Three signs your process is the problem (not your team)",
+    preheader: "A five-minute read for owners of growing businesses.",
+    segment: "prospects",
+    from_name: "BWIN Consultants",
+    from_email: "hello@bwinconsultants.com",
+    reply_to: "hello@bwinconsultants.com",
+    body: "<p>When work slips, the instinct is to hire. Often the process is the bottleneck, and three symptoms give it away.</p>",
+    status: "sent",
+    recipient_count: 986,
+    delivered_count: 964,
+    open_count: 402,
+    click_count: 97,
+    unsubscribe_count: 22,
+    bounce_count: 22,
+    created_by: "Priya Raman",
+    scheduled_at: null,
+    sent_at: "2026-07-30 08:00",
+    created_at: "2026-07-29 12:31",
+  },
+];
+
+export const NEWSLETTER_SUBSCRIBERS = [
+  { id: "SB-8801", full_name: "Amara Okafor", email: "amara.okafor@brightpathlogistics.com", status: "subscribed", segment: "automation", source: "Contact form", open_rate: 68, subscribed_at: "2026-08-23 09:14", last_activity: "2026-08-23 09:14" },
+  { id: "SB-8800", full_name: "Daniel Mensah", email: "d.mensah@mensahagro.co", status: "subscribed", segment: "clients", source: "Contact form", open_rate: 54, subscribed_at: "2026-08-22 16:42", last_activity: "2026-08-22 18:03" },
+  { id: "SB-8799", full_name: "Lena Vasquez", email: "lena.v@northstarclinics.com", status: "subscribed", segment: "students", source: "Course checkout", open_rate: 81, subscribed_at: "2026-08-22 11:06", last_activity: "2026-08-22 12:20" },
+  { id: "SB-8798", full_name: "Chidera Nwosu", email: "chidera.nwosu@gmail.com", status: "pending", segment: "students", source: "Website footer", open_rate: 0, subscribed_at: "2026-08-21 08:30", last_activity: "2026-08-21 08:30" },
+  { id: "SB-8797", full_name: "Marco Bellini", email: "m.bellini@belliniceramica.it", status: "subscribed", segment: "automation", source: "Contact form", open_rate: 47, subscribed_at: "2026-08-20 14:58", last_activity: "2026-08-21 09:11" },
+  { id: "SB-8796", full_name: "Grace Wanjiru", email: "grace@wanjiruproperties.ke", status: "subscribed", segment: "clients", source: "Manual", open_rate: 73, subscribed_at: "2026-08-19 12:12", last_activity: "2026-08-20 17:50" },
+  { id: "SB-8795", full_name: "Ibrahim Salihu", email: "ibrahim.salihu@sahelfoods.ng", status: "subscribed", segment: "automation", source: "Website footer", open_rate: 35, subscribed_at: "2026-08-18 10:21", last_activity: "2026-08-20 08:44" },
+  { id: "SB-8794", full_name: "Elena Petrova", email: "e.petrova@nordictextile.se", status: "unsubscribed", segment: "students", source: "Course checkout", open_rate: 12, subscribed_at: "2026-07-17 15:40", last_activity: "2026-08-18 09:02" },
+  { id: "SB-8793", full_name: "Femi Adebayo", email: "femi@adebayolegal.com", status: "subscribed", segment: "clients", source: "Contact form", open_rate: 62, subscribed_at: "2026-08-16 09:05", last_activity: "2026-08-20 10:18" },
+  { id: "SB-8792", full_name: "Hannah Kim", email: "hannah.kim@seolimstudio.kr", status: "subscribed", segment: "prospects", source: "Website footer", open_rate: 28, subscribed_at: "2026-08-15 13:49", last_activity: "2026-08-16 10:14" },
+  { id: "SB-8791", full_name: "Rashid Al-Mansoori", email: "rashid@almansoorigroup.ae", status: "subscribed", segment: "prospects", source: "Contact form", open_rate: 44, subscribed_at: "2026-08-21 19:52", last_activity: "2026-08-22 07:31" },
+  { id: "SB-8790", full_name: "Kwame Boateng", email: "kwame.boateng@volta-freight.gh", status: "bounced", segment: "automation", source: "Imported", open_rate: 0, subscribed_at: "2026-06-11 10:02", last_activity: "2026-08-06 09:04" },
+  { id: "SB-8789", full_name: "Sofia Rossi", email: "sofia.rossi@rossidesign.it", status: "subscribed", segment: "students", source: "Website footer", open_rate: 59, subscribed_at: "2026-07-28 20:15", last_activity: "2026-08-20 21:02" },
+  { id: "SB-8788", full_name: "Tunde Bakare", email: "tunde@bakareholdings.ng", status: "unsubscribed", segment: "prospects", source: "Imported", open_rate: 6, subscribed_at: "2026-05-04 08:44", last_activity: "2026-07-30 08:22" },
+];
