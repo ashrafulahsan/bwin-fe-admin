@@ -75,3 +75,14 @@ a:hover {
 .bwin-mail-body li {
   margin-bottom: 6px;
 }
+
+.bwin-ann-body p {
+  margin: 0 0 8px;
+}
+.bwin-ann-body p:last-child {
+  margin-bottom: 0;
+}
+.bwin-ann-one-line p {
+  margin: 0;
+  display: inline;
+}
