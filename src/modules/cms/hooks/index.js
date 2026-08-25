@@ -1,2 +1,1 @@
-// cms/hooks placeholder
-// Add cms-related hooks here.
+export { useMenus } from "./useMenus";

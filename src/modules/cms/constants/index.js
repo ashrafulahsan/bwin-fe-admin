@@ -1,2 +1,1 @@
-// cms/constants placeholder
-// Add cms-related constants here.
+export * from "./menus.mock";
