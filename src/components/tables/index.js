@@ -1,1 +1,1 @@
-// components/tables placeholder
+export { default as RowActionButton } from "./RowActionButton";

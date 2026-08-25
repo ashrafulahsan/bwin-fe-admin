@@ -46,6 +46,12 @@ import {
   PencilSquareIcon,
   ChartBarIcon,
   MagnifyingGlassIcon,
+  TrashIcon,
+  PauseIcon,
+  PlayIcon,
+  ArrowUturnLeftIcon,
+  XMarkIcon,
+  CloudArrowUpIcon,
 } from "@heroicons/react/24/outline";
 
 // Heroicons outline 24px, matching the design system's icon source
@@ -99,6 +105,12 @@ const ICONS = {
   "pencil-square": PencilSquareIcon,
   "chart-bar": ChartBarIcon,
   search: MagnifyingGlassIcon,
+  trash: TrashIcon,
+  pause: PauseIcon,
+  play: PlayIcon,
+  "arrow-uturn-left": ArrowUturnLeftIcon,
+  "x-mark": XMarkIcon,
+  "cloud-arrow-up": CloudArrowUpIcon,
 };
 
 export default function Icon({ name, size = 20, style, ...rest }) {

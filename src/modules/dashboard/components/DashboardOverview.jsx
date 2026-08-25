@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card, Badge, Button, Select, Icon } from "@/components/ui";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useAppStore } from "@/store/appStore";
+import { darkBadgeStyle } from "@/utils/badgeTone";
 import { HERO_STATS, LMS_CARDS, CMS_CARDS, PENDING_CARDS, RANGE_OPTIONS } from "../constants/dashboardData";
 
 // Tone -> [background, icon color], light/dark pairs — ported 1:1 from the
@@ -18,13 +19,6 @@ const FAMILIES = {
 function familyStyle(tone, darkMode) {
   const [bg, color] = FAMILIES[tone][darkMode ? "dark" : "light"];
   return { bg, color };
-}
-
-function badgeStyleFor(tone, darkMode) {
-  if (!darkMode) return undefined;
-  return tone === "warning"
-    ? { background: "var(--amber-700)", color: "var(--orange-100)" }
-    : { background: "var(--gray-700)", color: "var(--gray-200)" };
 }
 
 function StatCard({ stat, isMobile }) {
@@ -124,7 +118,7 @@ function DashboardCard({ card, darkMode }) {
             <Icon name={card.icon} size={18} style={{ color: card.color }} />
           </div>
           {card.badge && (
-            <Badge tone={card.badgeTone} style={badgeStyleFor(card.badgeTone, darkMode)}>
+            <Badge tone={card.badgeTone} style={darkBadgeStyle(card.badgeTone, darkMode)}>
               {card.badge}
             </Badge>
           )}
