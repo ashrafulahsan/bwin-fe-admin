@@ -52,6 +52,9 @@ import {
   ArrowUturnLeftIcon,
   XMarkIcon,
   CloudArrowUpIcon,
+  DocumentDuplicateIcon,
+  CheckIcon,
+  MinusIcon,
 } from "@heroicons/react/24/outline";
 
 // Heroicons outline 24px, matching the design system's icon source
@@ -111,6 +114,9 @@ const ICONS = {
   "arrow-uturn-left": ArrowUturnLeftIcon,
   "x-mark": XMarkIcon,
   "cloud-arrow-up": CloudArrowUpIcon,
+  "document-duplicate": DocumentDuplicateIcon,
+  check: CheckIcon,
+  minus: MinusIcon,
 };
 
 export default function Icon({ name, size = 20, style, ...rest }) {
