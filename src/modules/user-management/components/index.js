@@ -12,3 +12,7 @@ export { default as PermissionTable } from "./PermissionTable";
 export { default as AssignMatrix } from "./AssignMatrix";
 export { default as AddRoleForm } from "./AddRoleForm";
 export { default as RoleDetailModal } from "./RoleDetailModal";
+export { default as ActivityLogsPage } from "./ActivityLogsPage";
+export { default as ActivityLogFiltersBar } from "./ActivityLogFiltersBar";
+export { default as ActivityLogTable } from "./ActivityLogTable";
+export { default as ActivityLogDetailModal } from "./ActivityLogDetailModal";
