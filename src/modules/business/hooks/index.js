@@ -1,2 +1,1 @@
-// business/hooks placeholder
-// Add business-related hooks here.
+export { useConsultancies } from "./useConsultancies";

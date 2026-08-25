@@ -1,6 +1,8 @@
 "use client";
 
-export default function CourseStats({ stats }) {
+// Small stat-card row (label + mono value) used at the top of most admin
+// list pages — courses, consultancies, and likely every future CRUD page.
+export default function StatCardsGrid({ stats }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 16 }}>
       {stats.map((st) => (

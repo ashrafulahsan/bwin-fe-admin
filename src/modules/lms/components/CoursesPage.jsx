@@ -1,11 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui";
+import { StatCardsGrid, SearchFiltersBar } from "@/components/common";
 import { useAppStore } from "@/store/appStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useCourses } from "../hooks";
-import CourseStats from "./CourseStats";
-import CourseFiltersBar from "./CourseFiltersBar";
 import CourseTable from "./CourseTable";
 import CourseDetailModal from "./CourseDetailModal";
 import CourseForm from "./CourseForm";
@@ -67,7 +66,7 @@ export default function CoursesPage() {
 
       {isListView && (
         <>
-          <CourseStats stats={courses.stats} />
+          <StatCardsGrid stats={courses.stats} />
 
           {courses.notice && (
             <div
@@ -91,9 +90,11 @@ export default function CoursesPage() {
             </div>
           )}
 
-          <CourseFiltersBar
+          <SearchFiltersBar
             search={courses.search}
             onSearch={(e) => courses.setSearch(e.target.value)}
+            searchLabel="Search title, code or slug"
+            searchPlaceholder="e.g. automation, BWIN-AUT"
             selects={courses.filterSelects}
             onResetFilters={courses.resetFilters}
             showDeleted={courses.showDeleted}

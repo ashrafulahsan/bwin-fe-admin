@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui";
-import CourseFieldGroup from "./CourseFieldGroup";
+import { GenericFieldGroup } from "@/components/forms";
 import { COURSE_FORM_GROUPS, COURSE_ADVANCED_GROUPS } from "../constants/courseFormFields";
 import {
   COURSE_CATEGORIES,
@@ -55,7 +55,15 @@ export default function CourseForm({ editing, form, onFieldChange, advancedOpen,
 
         <div style={{ padding: "22px 24px 8px", display: "flex", flexDirection: "column", gap: 22 }}>
           {COURSE_FORM_GROUPS.map((group) => (
-            <CourseFieldGroup key={group.title} title={group.title} fields={group.fields} form={form} onFieldChange={onFieldChange} resolveOptions={resolveOptions} />
+            <GenericFieldGroup
+              key={group.title}
+              title={group.title}
+              fields={group.fields}
+              form={form}
+              onFieldChange={onFieldChange}
+              resolveOptions={resolveOptions}
+              richPlaceholder="The full course page copy — what it covers, who it is for, how it runs."
+            />
           ))}
 
           <button
@@ -88,7 +96,7 @@ export default function CourseForm({ editing, form, onFieldChange, advancedOpen,
           {advancedOpen && (
             <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
               {COURSE_ADVANCED_GROUPS.map((group) => (
-                <CourseFieldGroup key={group.title} title={group.title} fields={group.fields} form={form} onFieldChange={onFieldChange} resolveOptions={resolveOptions} />
+                <GenericFieldGroup key={group.title} title={group.title} fields={group.fields} form={form} onFieldChange={onFieldChange} resolveOptions={resolveOptions} />
               ))}
             </div>
           )}

@@ -4,7 +4,11 @@ import { Input, Select } from "@/components/ui";
 
 const captionStyle = { fontSize: "var(--fs-caption)", fontWeight: "var(--fw-medium)", color: "var(--text-muted)" };
 
-export default function CourseFiltersBar({ search, onSearch, selects, onResetFilters, showDeleted, onToggleDeleted }) {
+// Search box + a data-driven row of filter selects + Reset filters / Show
+// deleted — the list-page filter bar shape shared by every admin CRUD table
+// (courses, consultancies, and likely every future one). `selects` is
+// [{ key, label, value, onChange, options }].
+export default function SearchFiltersBar({ search, onSearch, searchLabel = "Search", searchPlaceholder, selects, onResetFilters, showDeleted, onToggleDeleted }) {
   return (
     <div
       style={{
@@ -21,8 +25,8 @@ export default function CourseFiltersBar({ search, onSearch, selects, onResetFil
       }}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span style={captionStyle}>Search title, code or slug</span>
-        <Input value={search} onChange={onSearch} placeholder="e.g. automation, BWIN-AUT" />
+        <span style={captionStyle}>{searchLabel}</span>
+        <Input value={search} onChange={onSearch} placeholder={searchPlaceholder} />
       </div>
 
       {selects.map((sel) => (
@@ -53,25 +57,27 @@ export default function CourseFiltersBar({ search, onSearch, selects, onResetFil
         >
           Reset filters
         </button>
-        <button
-          type="button"
-          onClick={onToggleDeleted}
-          style={{
-            padding: "9px 14px",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-sm)",
-            background: showDeleted ? "var(--surface-sunken)" : "transparent",
-            color: "var(--text-primary)",
-            fontFamily: "var(--font-body)",
-            fontSize: "var(--fs-body-sm)",
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-sunken)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = showDeleted ? "var(--surface-sunken)" : "transparent")}
-        >
-          {showDeleted ? "Showing deleted" : "Show deleted"}
-        </button>
+        {onToggleDeleted && (
+          <button
+            type="button"
+            onClick={onToggleDeleted}
+            style={{
+              padding: "9px 14px",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)",
+              background: showDeleted ? "var(--surface-sunken)" : "transparent",
+              color: "var(--text-primary)",
+              fontFamily: "var(--font-body)",
+              fontSize: "var(--fs-body-sm)",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-sunken)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = showDeleted ? "var(--surface-sunken)" : "transparent")}
+          >
+            {showDeleted ? "Showing deleted" : "Show deleted"}
+          </button>
+        )}
       </div>
     </div>
   );
