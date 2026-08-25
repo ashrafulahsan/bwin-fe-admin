@@ -63,6 +63,8 @@ import {
   FolderIcon,
   QuestionMarkCircleIcon,
   PaperClipIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
 } from "@heroicons/react/24/outline";
 
 // Heroicons outline 24px, matching the design system's icon source
@@ -133,6 +135,8 @@ const ICONS = {
   folder: FolderIcon,
   "question-mark-circle": QuestionMarkCircleIcon,
   "paper-clip": PaperClipIcon,
+  "arrow-up": ArrowUpIcon,
+  "arrow-down": ArrowDownIcon,
 };
 
 export default function Icon({ name, size = 20, style, ...rest }) {
