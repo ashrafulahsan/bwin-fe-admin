@@ -1,2 +1,1 @@
-// auth/components placeholder
-// Add auth-related components here.
+export { default as LoginForm } from "./LoginForm";

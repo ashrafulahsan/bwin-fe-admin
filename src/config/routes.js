@@ -4,6 +4,7 @@
 // (BWIN Consultants admin panel/data/admin-menu.js).
 export const ROUTES = {
   LOGIN: "/login",
+  FORGOT_PASSWORD: "/forgot-password",
   DASHBOARD: "/dashboard",
 
   // Users
