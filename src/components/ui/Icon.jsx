@@ -1,0 +1,116 @@
+import {
+  Squares2X2Icon,
+  UsersIcon,
+  DocumentTextIcon,
+  AcademicCapIcon,
+  BriefcaseIcon,
+  BoltIcon,
+  ChatBubbleLeftRightIcon,
+  CreditCardIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  ArrowLeftOnRectangleIcon,
+  Bars3Icon,
+  SunIcon,
+  MoonIcon,
+  BellIcon,
+  UserIcon,
+  Cog6ToothIcon,
+  PlusIcon,
+  BookOpenIcon,
+  RectangleStackIcon,
+  PlayCircleIcon,
+  ClipboardDocumentCheckIcon,
+  UserGroupIcon,
+  IdentificationIcon,
+  ClipboardDocumentListIcon,
+  BanknotesIcon,
+  CurrencyDollarIcon,
+  DocumentIcon,
+  NewspaperIcon,
+  TagIcon,
+  HashtagIcon,
+  ChatBubbleLeftIcon,
+  PhotoIcon,
+  EyeIcon,
+  EnvelopeIcon,
+  UserPlusIcon,
+  ChartPieIcon,
+  TrophyIcon,
+  CursorArrowRaysIcon,
+  FireIcon,
+  ArrowTrendingUpIcon,
+  ClockIcon,
+  ChatBubbleLeftEllipsisIcon,
+  PencilIcon,
+  PencilSquareIcon,
+  ChartBarIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
+
+// Heroicons outline 24px, matching the design system's icon source
+// (cdn.jsdelivr.net/npm/heroicons@2.1.5/24/outline) — keyed by the same
+// kebab-case names used throughout the BWIN Consultants design files.
+const ICONS = {
+  "squares-2x2": Squares2X2Icon,
+  users: UsersIcon,
+  "document-text": DocumentTextIcon,
+  "academic-cap": AcademicCapIcon,
+  briefcase: BriefcaseIcon,
+  bolt: BoltIcon,
+  "chat-bubble-left-right": ChatBubbleLeftRightIcon,
+  "credit-card": CreditCardIcon,
+  "chevron-up": ChevronUpIcon,
+  "chevron-down": ChevronDownIcon,
+  "arrow-left-on-rectangle": ArrowLeftOnRectangleIcon,
+  "bars-3": Bars3Icon,
+  sun: SunIcon,
+  moon: MoonIcon,
+  bell: BellIcon,
+  user: UserIcon,
+  "cog-6-tooth": Cog6ToothIcon,
+  plus: PlusIcon,
+  "book-open": BookOpenIcon,
+  "rectangle-stack": RectangleStackIcon,
+  "play-circle": PlayCircleIcon,
+  "clipboard-document-check": ClipboardDocumentCheckIcon,
+  "user-group": UserGroupIcon,
+  identification: IdentificationIcon,
+  "clipboard-document-list": ClipboardDocumentListIcon,
+  banknotes: BanknotesIcon,
+  "currency-dollar": CurrencyDollarIcon,
+  document: DocumentIcon,
+  newspaper: NewspaperIcon,
+  tag: TagIcon,
+  hashtag: HashtagIcon,
+  "chat-bubble-left": ChatBubbleLeftIcon,
+  photo: PhotoIcon,
+  eye: EyeIcon,
+  envelope: EnvelopeIcon,
+  "user-plus": UserPlusIcon,
+  "chart-pie": ChartPieIcon,
+  trophy: TrophyIcon,
+  "cursor-arrow-rays": CursorArrowRaysIcon,
+  fire: FireIcon,
+  "arrow-trending-up": ArrowTrendingUpIcon,
+  clock: ClockIcon,
+  "chat-bubble-left-ellipsis": ChatBubbleLeftEllipsisIcon,
+  pencil: PencilIcon,
+  "pencil-square": PencilSquareIcon,
+  "chart-bar": ChartBarIcon,
+  search: MagnifyingGlassIcon,
+};
+
+export default function Icon({ name, size = 20, style, ...rest }) {
+  const Cmp = ICONS[name];
+  if (!Cmp) {
+    return <span style={{ display: "inline-block", width: size, height: size, flex: "none" }} />;
+  }
+  return (
+    <Cmp
+      aria-hidden="true"
+      style={{ width: size, height: size, flex: "none", ...style }}
+      {...rest}
+    />
+  );
+}

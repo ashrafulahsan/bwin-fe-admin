@@ -1,0 +1,186 @@
+/*
+ * BWIN Consultants design tokens — ported 1:1 from the Claude Design source
+ * at "BWIN Consultants admin panel/_ds/.../tokens/{colors,typography,spacing,radius,shadow}.css".
+ * Do not hand-tune values here; if the design changes, re-copy from the source tokens.
+ */
+:root {
+  /* Primary — Navy (from logo) */
+  --navy-50: #eef3f8;
+  --navy-100: #dce8f1;
+  --navy-200: #b9d0e3;
+  --navy-300: #8fb0cc;
+  --navy-400: #5f87aa;
+  --navy-500: #2f5b85;
+  --navy-600: #1d4166;
+  --navy-700: #14325a;
+  --navy-800: #0f2544;
+  --navy-900: #0a192f;
+
+  /* Accent — Orange (from logo) */
+  --orange-50: #fff6ea;
+  --orange-100: #ffe9cc;
+  --orange-200: #ffd199;
+  --orange-300: #ffb966;
+  --orange-400: #fca33d;
+  --orange-500: #f0901e;
+  --orange-600: #d97812;
+  --orange-700: #b35f0c;
+  --orange-800: #8c4a0a;
+  --orange-900: #663507;
+
+  /* Tertiary — Tan/Brown (from logo) */
+  --tan-50: #faf3ea;
+  --tan-100: #f0e1cb;
+  --tan-200: #dfc297;
+  --tan-300: #cba26a;
+  --tan-400: #b8873f;
+  --tan-500: #a66f35;
+  --tan-600: #8a5a2a;
+  --tan-700: #6e4720;
+  --tan-800: #523517;
+  --tan-900: #38240f;
+
+  /* Neutral — cool gray (navy-tinted) */
+  --gray-50: #f7f8fa;
+  --gray-100: #eef1f4;
+  --gray-200: #dfe4e9;
+  --gray-300: #c7cfd8;
+  --gray-400: #a3aebb;
+  --gray-500: #7c8797;
+  --gray-600: #5d6675;
+  --gray-700: #454c59;
+  --gray-800: #2e333d;
+  --gray-900: #1a1d23;
+  --gray-950: #0f1115;
+
+  /* Semantic hues */
+  --green-500: #1e8e5a;
+  --green-100: #e4f5ec;
+  --green-700: #186e46;
+  --amber-500: #c77d0a;
+  --amber-100: #fbeeda;
+  --amber-700: #8f5a06;
+  --red-500: #dc2626;
+  --red-100: #fbe7e7;
+  --red-700: #a31d1d;
+  --white: #ffffff;
+
+  /* Semantic aliases — surfaces */
+  --surface-page: var(--gray-50);
+  --surface-card: var(--white);
+  --surface-sunken: var(--gray-100);
+  --surface-inverse: var(--navy-800);
+  --surface-brand: var(--navy-700);
+  --surface-brand-hover: var(--navy-800);
+  --surface-accent: var(--orange-500);
+  --surface-accent-hover: var(--orange-600);
+
+  /* Semantic aliases — text */
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-muted: var(--gray-500);
+  --text-inverse: var(--white);
+  --text-brand: var(--navy-700);
+  --text-accent: var(--orange-600);
+  --text-link: var(--navy-600);
+  --text-link-hover: var(--navy-700);
+
+  /* Semantic aliases — borders */
+  --border: var(--gray-200);
+  --border-strong: var(--gray-300);
+  --border-focus: var(--navy-500);
+
+  /* Semantic aliases — state */
+  --state-success: var(--green-500);
+  --state-success-bg: var(--green-100);
+  --state-warning: var(--amber-500);
+  --state-warning-bg: var(--amber-100);
+  --state-error: var(--red-500);
+  --state-error-bg: var(--red-100);
+  --state-info: var(--navy-500);
+  --state-info-bg: var(--navy-50);
+
+  /* Typography scale */
+  --fs-display-xl: 64px;
+  --fs-display-lg: 48px;
+  --fs-display-md: 38px;
+  --fs-heading-lg: 32px;
+  --fs-heading-md: 24px;
+  --fs-heading-sm: 20px;
+  --fs-body-lg: 19px;
+  --fs-body-md: 17px;
+  --fs-body-sm: 15px;
+  --fs-caption: 13px;
+  --fs-mono-md: 16px;
+  --fs-mono-sm: 14px;
+
+  --lh-display: 1.1;
+  --lh-heading: 1.25;
+  --lh-body: 1.6;
+  --lh-caption: 1.4;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  --ls-display: -0.01em;
+  --ls-heading: -0.005em;
+  --ls-body: 0;
+  --ls-caption: 0.01em;
+
+  /* Spacing (4px-rooted scale) */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 20px;
+  --space-7: 24px;
+  --space-8: 32px;
+  --space-9: 40px;
+  --space-10: 48px;
+  --space-11: 64px;
+  --space-12: 80px;
+  --space-13: 96px;
+  --container-max: 1200px;
+  --content-max: 720px;
+
+  /* Radius */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+
+  /* Shadow / motion */
+  --shadow-sm: 0 1px 2px rgba(10, 25, 47, 0.06), 0 1px 1px rgba(10, 25, 47, 0.04);
+  --shadow-md: 0 2px 6px rgba(10, 25, 47, 0.08), 0 1px 2px rgba(10, 25, 47, 0.05);
+  --shadow-lg: 0 8px 24px rgba(10, 25, 47, 0.12), 0 2px 6px rgba(10, 25, 47, 0.06);
+  --shadow-focus: 0 0 0 3px rgba(47, 91, 133, 0.25);
+  --shadow-inset: inset 0 1px 2px rgba(10, 25, 47, 0.06);
+  --ease-standard: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 120ms;
+  --duration-md: 200ms;
+  --duration-slow: 320ms;
+}
+
+/*
+ * Scoped dark theme — mirrors the `themeVars` override applied to the Admin Panel
+ * root element in the design source (only surfaces/text/border tokens shift; the
+ * brand/accent/semantic scales stay the same). Applied via [data-theme="dark"] on
+ * the dashboard shell root, not the whole document.
+ */
+[data-theme="dark"] {
+  --surface-page: var(--navy-900);
+  --surface-card: var(--navy-800);
+  --surface-sunken: var(--navy-700);
+  --text-primary: var(--white);
+  --text-secondary: var(--navy-200);
+  --text-muted: var(--navy-300);
+  --border: var(--navy-600);
+  --border-strong: var(--navy-500);
+}

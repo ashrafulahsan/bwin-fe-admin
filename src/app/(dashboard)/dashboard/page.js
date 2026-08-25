@@ -1,4 +1,5 @@
-// TODO: implement dashboard overview via modules/dashboard/components
+import DashboardOverview from "@/modules/dashboard/components/DashboardOverview";
+
 export default function DashboardPage() {
-  return <div>Dashboard</div>;
+  return <DashboardOverview greetingName="Admin" />;
 }

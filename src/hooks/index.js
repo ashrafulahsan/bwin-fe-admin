@@ -1,1 +1,1 @@
-// hooks placeholder
+export { useResponsiveSidebar } from "./useResponsiveSidebar";
