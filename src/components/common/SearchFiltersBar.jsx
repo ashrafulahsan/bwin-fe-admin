@@ -8,7 +8,7 @@ const captionStyle = { fontSize: "var(--fs-caption)", fontWeight: "var(--fw-medi
 // deleted — the list-page filter bar shape shared by every admin CRUD table
 // (courses, consultancies, and likely every future one). `selects` is
 // [{ key, label, value, onChange, options }].
-export default function SearchFiltersBar({ search, onSearch, searchLabel = "Search", searchPlaceholder, selects, onResetFilters, showDeleted, onToggleDeleted }) {
+export default function SearchFiltersBar({ search, onSearch, searchLabel = "Search", searchPlaceholder, searchSpan = "auto", selects, onResetFilters, showDeleted, onToggleDeleted }) {
   return (
     <div
       style={{
@@ -24,7 +24,7 @@ export default function SearchFiltersBar({ search, onSearch, searchLabel = "Sear
         alignItems: "end",
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: searchSpan }}>
         <span style={captionStyle}>{searchLabel}</span>
         <Input value={search} onChange={onSearch} placeholder={searchPlaceholder} />
       </div>
