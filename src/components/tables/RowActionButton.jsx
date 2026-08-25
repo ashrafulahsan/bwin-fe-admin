@@ -6,7 +6,10 @@
 // project notes, "same pattern as admin-panel-user-management.dc.html").
 // Pass a colored <Icon .../> directly for a destructive action (e.g. delete) —
 // only the icon is tinted red, not the button chrome, until hover.
-export default function RowActionButton({ icon, title, onClick, danger = false }) {
+// For a toggle-style action (e.g. "feature"), pass `active` + `activeBg` to
+// tint the resting background when the toggle is on.
+export default function RowActionButton({ icon, title, onClick, danger = false, active = false, activeBg }) {
+  const restBg = active ? activeBg : "var(--surface-card)";
   return (
     <button
       type="button"
@@ -21,7 +24,7 @@ export default function RowActionButton({ icon, title, onClick, danger = false }
         justifyContent: "center",
         border: "1px solid var(--border-strong)",
         borderRadius: "var(--radius-sm)",
-        background: "var(--surface-card)",
+        background: restBg,
         color: "var(--text-secondary)",
         cursor: "pointer",
       }}
@@ -30,7 +33,7 @@ export default function RowActionButton({ icon, title, onClick, danger = false }
         if (!danger) e.currentTarget.style.color = "var(--text-primary)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = "var(--surface-card)";
+        e.currentTarget.style.background = restBg;
         if (!danger) e.currentTarget.style.color = "var(--text-secondary)";
       }}
     >

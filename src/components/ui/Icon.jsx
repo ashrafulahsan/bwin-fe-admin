@@ -55,6 +55,13 @@ import {
   DocumentDuplicateIcon,
   CheckIcon,
   MinusIcon,
+  Square2StackIcon,
+  StarIcon,
+  ArrowUpTrayIcon,
+  ArrowDownTrayIcon,
+  ArrowPathIcon,
+  FolderIcon,
+  QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
 
 // Heroicons outline 24px, matching the design system's icon source
@@ -117,6 +124,13 @@ const ICONS = {
   "document-duplicate": DocumentDuplicateIcon,
   check: CheckIcon,
   minus: MinusIcon,
+  "square-2-stack": Square2StackIcon,
+  star: StarIcon,
+  "arrow-up-tray": ArrowUpTrayIcon,
+  "arrow-down-tray": ArrowDownTrayIcon,
+  "arrow-path": ArrowPathIcon,
+  folder: FolderIcon,
+  "question-mark-circle": QuestionMarkCircleIcon,
 };
 
 export default function Icon({ name, size = 20, style, ...rest }) {

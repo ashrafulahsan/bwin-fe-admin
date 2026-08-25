@@ -1,1 +1,1 @@
-// components/forms placeholder
+export { default as RichTextEditor } from "./RichTextEditor";
