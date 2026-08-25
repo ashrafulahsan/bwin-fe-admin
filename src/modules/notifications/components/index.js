@@ -1,2 +1,5 @@
-// notifications/components placeholder
-// Add notifications-related components here.
+export { default as NotificationsPage } from "./NotificationsPage";
+export { default as NotificationTable } from "./NotificationTable";
+export { default as NotificationTabs } from "./NotificationTabs";
+export { default as NotificationDetailView } from "./NotificationDetailView";
+export { default as NotificationCreateModal } from "./NotificationCreateModal";

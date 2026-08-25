@@ -1,2 +1,1 @@
-// notifications/hooks placeholder
-// Add notifications-related hooks here.
+export { useNotifications } from "./useNotifications";

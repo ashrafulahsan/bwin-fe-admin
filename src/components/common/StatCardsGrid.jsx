@@ -1,17 +1,22 @@
 "use client";
 
 // Small stat-card row used at the top of most admin list pages. Plain
-// (label + mono value) by default. Pass `onSelect` + `activeKey` to make the
-// cards clickable filter shortcuts instead (e.g. contact-form submissions
-// status counts) — each `stat` then needs a `key`; the active card gets an
-// orange border and the whole row becomes buttons.
+// (label + mono value) by default. Make cards clickable filter shortcuts
+// either way:
+//   - simple case: pass `onSelect` + `activeKey`, and give each stat a `key`
+//     (contact-form submissions' single status filter).
+//   - custom case: give each stat its own `onClick` + `active` directly, for
+//     cards that drive different pieces of state (notifications' origin tabs
+//     + a separate "Scheduled" toggle). Per-stat `onClick`/`active` always
+//     wins over the generic `onSelect`/`activeKey` when both are present.
+// Either way the active card gets an orange border and the row becomes buttons.
 export default function StatCardsGrid({ stats, onSelect, activeKey }) {
-  const clickable = typeof onSelect === "function";
+  const clickable = typeof onSelect === "function" || stats.some((st) => typeof st.onClick === "function");
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 16 }}>
       {stats.map((st) => {
-        const active = clickable && st.key === activeKey;
+        const active = clickable && (st.active !== undefined ? st.active : st.key === activeKey);
         const baseStyle = {
           background: "var(--surface-card)",
           border: `1px solid ${clickable ? (active ? "var(--orange-500)" : "var(--border)") : "var(--border)"}`,
@@ -33,7 +38,7 @@ export default function StatCardsGrid({ stats, onSelect, activeKey }) {
           <button
             key={st.key}
             type="button"
-            onClick={() => onSelect(st.key)}
+            onClick={st.onClick || (() => onSelect(st.key))}
             style={{ ...baseStyle, textAlign: "left", cursor: "pointer", fontFamily: "var(--font-body)" }}
             onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "var(--shadow-md)")}
             onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "var(--shadow-sm)")}

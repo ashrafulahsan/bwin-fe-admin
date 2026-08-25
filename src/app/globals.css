@@ -32,3 +32,24 @@ a:hover {
   background: var(--gray-300);
   border-radius: 4px;
 }
+
+/* Rendered HTML for stored rich-text content (notification/course/article
+   bodies) — the RichTextEditor's own toolbar CSS lives with the component;
+   this is only for read-only display via dangerouslySetInnerHTML. */
+.bwin-notif-body p {
+  margin: 0 0 12px;
+}
+.bwin-notif-body p:last-child {
+  margin-bottom: 0;
+}
+.bwin-notif-body h2,
+.bwin-notif-body h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 18px 0 8px;
+}
+.bwin-notif-body ul,
+.bwin-notif-body ol {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
