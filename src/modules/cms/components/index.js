@@ -3,3 +3,8 @@ export { default as CategoryCards } from "./CategoryCards";
 export { default as MenuTree } from "./MenuTree";
 export { default as MenuPreviewPanel } from "./MenuPreviewPanel";
 export { default as MenuFormModal } from "./MenuFormModal";
+export { default as TaxonomyPage } from "./TaxonomyPage";
+export { default as CategoryTypesList } from "./CategoryTypesList";
+export { default as CategoryTree } from "./CategoryTree";
+export { default as CategoryTypeFormModal } from "./CategoryTypeFormModal";
+export { default as CategoryFormModal } from "./CategoryFormModal";
