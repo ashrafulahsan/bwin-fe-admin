@@ -19,3 +19,7 @@ export { default as ArticlesPage } from "./ArticlesPage";
 export { default as ArticleFiltersBar } from "./ArticleFiltersBar";
 export { default as ArticleTable } from "./ArticleTable";
 export { default as ArticleFormModal } from "./ArticleFormModal";
+export { default as PagesPage } from "./PagesPage";
+export { default as PageFiltersBar } from "./PageFiltersBar";
+export { default as PageTable } from "./PageTable";
+export { default as PageFormModal } from "./PageFormModal";

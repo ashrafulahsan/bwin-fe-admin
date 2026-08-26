@@ -3,3 +3,4 @@ export { default as SearchFiltersBar } from "./SearchFiltersBar";
 export { default as Toast } from "./Toast";
 export { default as UnderlineTabs } from "./UnderlineTabs";
 export { default as ConfirmDialog } from "./ConfirmDialog";
+export { default as ImageDropzone } from "./ImageDropzone";

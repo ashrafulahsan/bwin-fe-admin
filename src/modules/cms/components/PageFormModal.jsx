@@ -5,7 +5,7 @@ import { ImageDropzone } from "@/components/common";
 
 const captionStyle = { fontSize: "var(--fs-caption)", fontWeight: "var(--fw-medium)", color: "var(--text-muted)" };
 
-export default function ArticleFormModal({
+export default function PageFormModal({
   title,
   subtitle,
   form,
@@ -19,33 +19,29 @@ export default function ArticleFormModal({
   seoTabColor,
   onTitle,
   onSlug,
-  onCategory,
-  categoryOptions,
-  onExcerpt,
-  excerptCount,
+  urlPreview,
+  onDescription,
+  descriptionCount,
   onContent,
   contentStats,
-  featuredFileRef,
-  onFeaturedFile,
-  onFeaturedDragOver,
-  onFeaturedDragLeave,
-  onFeaturedDrop,
-  featuredDropBorder,
-  featuredDropBg,
-  featuredPreviewCss,
-  featuredPlaceholder,
-  featuredUploadLabel,
-  hasFeaturedImage,
-  pickFeatured,
-  clearFeatured,
-  featuredHint,
-  onImageAlt,
-  onAuthor,
-  authorOptions,
+  thumbFileRef,
+  onThumbFile,
+  onThumbDragOver,
+  onThumbDragLeave,
+  onThumbDrop,
+  thumbDropBorder,
+  thumbDropBg,
+  thumbPreviewCss,
+  thumbPlaceholder,
+  thumbUploadLabel,
+  hasThumb,
+  pickThumb,
+  clearThumb,
+  thumbHint,
+  onThumbAlt,
   onStatus,
   statusOptions,
   onPublishedAt,
-  onReadingMinutes,
   onFeatured,
   previewUrl,
   previewTitle,
@@ -76,7 +72,7 @@ export default function ArticleFormModal({
   pickOg,
   clearOg,
   ogHint,
-  useFeaturedForOg,
+  useThumbForOg,
   formError,
   meta,
   saveLabel,
@@ -127,68 +123,57 @@ export default function ArticleFormModal({
           <div style={{ padding: "20px 24px 0", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px 20px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
               <span style={captionStyle}>Title</span>
-              <Input value={form.title} onChange={onTitle} placeholder="e.g. Five signs your invoicing process needs automating" />
+              <Input value={form.title} onChange={onTitle} placeholder="e.g. Business automation" />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={captionStyle}>Slug</span>
-              <Input value={form.slug} onChange={onSlug} placeholder="five-signs-invoicing-automation" />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={captionStyle}>Category</span>
-              <Select value={form.blog_category_id} onChange={onCategory} options={categoryOptions} />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
-              <span style={captionStyle}>Excerpt</span>
-              <Textarea value={form.excerpt} onChange={onExcerpt} rows={2} placeholder="One or two sentences shown on the insights index" />
-              <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>{excerptCount}</span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
-              <span style={captionStyle}>Content</span>
-              <Textarea value={form.content} onChange={onContent} rows={8} placeholder="Write the post body" />
-              <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>{contentStats}</span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
-              <span style={captionStyle}>Featured image</span>
-              <ImageDropzone
-                fileRef={featuredFileRef}
-                onFile={onFeaturedFile}
-                onDragOver={onFeaturedDragOver}
-                onDragLeave={onFeaturedDragLeave}
-                onDrop={onFeaturedDrop}
-                dropBorder={featuredDropBorder}
-                dropBg={featuredDropBg}
-                previewCss={featuredPreviewCss}
-                placeholder={featuredPlaceholder}
-                uploadLabel={featuredUploadLabel}
-                hasImage={hasFeaturedImage}
-                onPick={pickFeatured}
-                onClear={clearFeatured}
-                hint={featuredHint}
-              />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
-              <span style={captionStyle}>Image alt text</span>
-              <Input value={form.featured_image_alt} onChange={onImageAlt} placeholder="Describe the image for screen readers" />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={captionStyle}>Author</span>
-              <Select value={form.author_id} onChange={onAuthor} options={authorOptions} />
+              <Input value={form.slug} onChange={onSlug} placeholder="business-automation" />
+              <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>{urlPreview}</span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={captionStyle}>Status</span>
               <Select value={form.status} onChange={onStatus} options={statusOptions} />
             </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
+              <span style={captionStyle}>Description</span>
+              <Textarea value={form.description} onChange={onDescription} rows={2} placeholder="One or two sentences describing what the page covers" />
+              <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>{descriptionCount}</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
+              <span style={captionStyle}>Content</span>
+              <Textarea value={form.content} onChange={onContent} rows={8} placeholder="Page body" />
+              <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>{contentStats}</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
+              <span style={captionStyle}>Thumbnail image</span>
+              <ImageDropzone
+                fileRef={thumbFileRef}
+                onFile={onThumbFile}
+                onDragOver={onThumbDragOver}
+                onDragLeave={onThumbDragLeave}
+                onDrop={onThumbDrop}
+                dropBorder={thumbDropBorder}
+                dropBg={thumbDropBg}
+                previewCss={thumbPreviewCss}
+                placeholder={thumbPlaceholder}
+                uploadLabel={thumbUploadLabel}
+                hasImage={hasThumb}
+                onPick={pickThumb}
+                onClear={clearThumb}
+                hint={thumbHint}
+              />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
+              <span style={captionStyle}>Thumbnail alt text</span>
+              <Input value={form.thumbnail_image_alt} onChange={onThumbAlt} placeholder="Describe the image for screen readers" />
+            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={captionStyle}>Publish date</span>
               <Input type="datetime-local" value={form.published_at} onChange={onPublishedAt} />
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={captionStyle}>Reading minutes</span>
-              <Input type="number" value={form.reading_minutes} onChange={onReadingMinutes} />
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, gridColumn: "1/-1", padding: "2px 0 4px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "2px 0 4px" }}>
               <Switch checked={form.is_featured} onChange={onFeatured} />
-              <span style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>Feature this post on the insights index</span>
+              <span style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>Feature in site navigation</span>
             </div>
           </div>
         )}
@@ -205,17 +190,17 @@ export default function ArticleFormModal({
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px 20px" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
                 <span style={captionStyle}>Meta title</span>
-                <Input value={form.meta_title} onChange={onMetaTitle} placeholder="Falls back to the post title" />
+                <Input value={form.meta_title} onChange={onMetaTitle} placeholder="Falls back to the page title" />
                 <span style={{ fontSize: "var(--fs-caption)", color: metaTitleColor }}>{metaTitleCount}</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
                 <span style={captionStyle}>Meta description</span>
-                <Textarea value={form.meta_description} onChange={onMetaDescription} rows={2} placeholder="Falls back to the excerpt" />
+                <Textarea value={form.meta_description} onChange={onMetaDescription} rows={2} placeholder="Falls back to the page description" />
                 <span style={{ fontSize: "var(--fs-caption)", color: metaDescColor }}>{metaDescCount}</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <span style={captionStyle}>Meta keywords</span>
-                <Input value={form.meta_keywords} onChange={onMetaKeywords} placeholder="invoicing automation, finance workflow" />
+                <Input value={form.meta_keywords} onChange={onMetaKeywords} placeholder="automation, workflow" />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <span style={captionStyle}>Robots</span>
@@ -223,7 +208,7 @@ export default function ArticleFormModal({
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
                 <span style={captionStyle}>Canonical URL</span>
-                <Input value={form.canonical_url} onChange={onCanonical} placeholder="https://bwin.example/insights/..." />
+                <Input value={form.canonical_url} onChange={onCanonical} placeholder="https://bwin.example/automation" />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
                 <span style={captionStyle}>Open Graph title</span>
@@ -231,7 +216,7 @@ export default function ArticleFormModal({
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
                 <span style={captionStyle}>Open Graph description</span>
-                <Textarea value={form.og_description} onChange={onOgDescription} rows={2} placeholder="Shown when the post is shared" />
+                <Textarea value={form.og_description} onChange={onOgDescription} rows={2} placeholder="Shown when the page is shared" />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
                 <span style={captionStyle}>Open Graph image</span>
@@ -254,12 +239,12 @@ export default function ArticleFormModal({
                   />
                   <button
                     type="button"
-                    onClick={useFeaturedForOg}
+                    onClick={useThumbForOg}
                     style={{ alignSelf: "flex-start", padding: "8px 12px", border: "1px solid var(--border-strong)", borderRadius: "var(--radius-sm)", background: "var(--surface-card)", color: "var(--text-primary)", fontFamily: "var(--font-body)", fontSize: "var(--fs-body-sm)", fontWeight: "var(--fw-medium)", cursor: "pointer", whiteSpace: "nowrap" }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-sunken)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "var(--surface-card)")}
                   >
-                    Use featured image
+                    Use thumbnail
                   </button>
                 </div>
               </div>
