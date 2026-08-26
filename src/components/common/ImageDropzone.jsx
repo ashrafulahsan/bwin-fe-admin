@@ -6,19 +6,20 @@ import { Button } from "@/components/ui";
 // box, an Upload/Replace button (opens the hidden file input), an
 // optional Remove button, and a hint line. Used for any "attach an
 // image" form field (featured/thumbnail images, Open Graph images).
-export default function ImageDropzone({ fileRef, onFile, onDragOver, onDragLeave, onDrop, dropBorder, dropBg, previewCss, placeholder, uploadLabel, hasImage, onPick, onClear, hint }) {
+export default function ImageDropzone({ fileRef, onFile, onDragOver, onDragLeave, onDrop, dropBorder, dropBg, previewCss, placeholder, uploadLabel, hasImage, onPick, onClear, hint, fit = "cover", boxWidth = 96, boxHeight = 64 }) {
   return (
     <div onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop} style={{ display: "flex", alignItems: "center", gap: 14, padding: 12, border: `1px dashed ${dropBorder}`, borderRadius: "var(--radius-sm)", background: dropBg }}>
       <div
         style={{
           flex: "none",
-          width: 96,
-          height: 64,
+          width: boxWidth,
+          height: boxHeight,
           border: "1px solid var(--border)",
           borderRadius: "var(--radius-xs)",
           backgroundColor: "var(--surface-sunken)",
           backgroundImage: previewCss,
-          backgroundSize: "cover",
+          backgroundSize: fit,
+          backgroundRepeat: "no-repeat",
           backgroundPosition: "center",
           display: "flex",
           alignItems: "center",

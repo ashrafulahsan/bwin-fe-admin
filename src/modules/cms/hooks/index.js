@@ -3,3 +3,4 @@ export { useTaxonomy } from "./useTaxonomy";
 export { useList } from "./useList";
 export { useArticles } from "./useArticles";
 export { usePages } from "./usePages";
+export { useSiteSettings } from "./useSiteSettings";

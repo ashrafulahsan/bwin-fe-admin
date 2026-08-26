@@ -23,3 +23,6 @@ export { default as PagesPage } from "./PagesPage";
 export { default as PageFiltersBar } from "./PageFiltersBar";
 export { default as PageTable } from "./PageTable";
 export { default as PageFormModal } from "./PageFormModal";
+export { default as SiteSettingsPage } from "./SiteSettingsPage";
+export { default as SettingsGroupTabs } from "./SettingsGroupTabs";
+export { default as SettingsRow } from "./SettingsRow";
