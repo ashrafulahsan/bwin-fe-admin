@@ -122,17 +122,16 @@ export const useLogout = () => {
 
   return useMutation({
     mutationFn: () => authService.logout(),
-    onSuccess: () => {
-      // Clear tokens
+    // Clear local auth state on settle (not just success) — the backend call
+    // can fail (expired token, network down) and the user must still be
+    // logged out locally rather than stuck on the dashboard.
+    onSettled: () => {
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(TOKEN_STORAGE_KEY);
         window.localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
       }
 
-      // Clear auth state
       logout();
-
-      // Clear all queries
       queryClient.clear();
     },
   });

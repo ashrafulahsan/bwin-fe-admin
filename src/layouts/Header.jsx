@@ -6,6 +6,8 @@ import { Icon, IconButton, Input, Avatar } from "@/components/ui";
 import { useAppStore } from "@/store/appStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useAuthStore } from "@/store/authStore";
+import { useLogout } from "@/hooks/useApi";
+import { useToast } from "@/hooks/useToast";
 import { ROUTES } from "@/config/routes";
 import { NOTIFICATIONS } from "@/modules/notifications/constants/notifications.mock";
 
@@ -31,7 +33,8 @@ export default function Header() {
   const toggleDarkMode = useSettingsStore((state) => state.toggleDarkMode);
 
   const greetingName = useAuthStore((state) => state.user?.name ?? "Admin");
-  const logout = useAuthStore((state) => state.logout);
+  const logoutMutation = useLogout();
+  const { showSuccess } = useToast();
 
   useEffect(() => {
     if (!notificationsOpen && !profileOpen) return;
@@ -49,8 +52,13 @@ export default function Header() {
   const notifItems = sentNotifications.slice(0, 5);
 
   const handleLogout = () => {
-    logout();
-    router.push("/login");
+    closePopovers();
+    logoutMutation.mutate(undefined, {
+      onSettled: () => {
+        showSuccess("You have been logged out.");
+        router.push(ROUTES.LOGIN);
+      },
+    });
   };
 
   return (
@@ -274,14 +282,15 @@ export default function Header() {
             </button>
             <button
               onClick={handleLogout}
-              style={{ ...menuButtonStyle, color: "var(--state-error)" }}
+              disabled={logoutMutation.isPending}
+              style={{ ...menuButtonStyle, color: "var(--state-error)", opacity: logoutMutation.isPending ? 0.6 : 1, cursor: logoutMutation.isPending ? "not-allowed" : "pointer" }}
               onMouseEnter={(e) => (e.currentTarget.style.background = "var(--state-error-bg)")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
               <span style={{ display: "inline-flex" }}>
                 <Icon name="arrow-left-on-rectangle" size={16} style={{ color: "var(--state-error)" }} />
               </span>
-              <span>Log out</span>
+              <span>{logoutMutation.isPending ? "Logging out…" : "Log out"}</span>
             </button>
           </div>
         )}

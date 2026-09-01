@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
@@ -9,11 +9,20 @@ import { useSettingsStore } from "@/store/settingsStore";
 import { useResponsiveSidebar } from "@/hooks";
 import { useAuthStore } from "@/store/authStore";
 import { TOKEN_STORAGE_KEY } from "@/constants/constants";
+import { ROUTES } from "@/config/routes";
+
+const noopSubscribe = () => () => {};
+// Returning null keeps the server render and the client's pre-hydration render
+// identical (no mismatch); React re-syncs to the real localStorage value right
+// after hydration completes — no extra gating state, no manual setState-in-effect.
+const getServerSnapshot = () => null;
+const getClientTokenSnapshot = () => window.localStorage.getItem(TOKEN_STORAGE_KEY);
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const accessToken = useAuthStore((state) => state.accessToken);
+  const token = useSyncExternalStore(noopSubscribe, getClientTokenSnapshot, getServerSnapshot);
+  const isChecking = !token && !isAuthenticated;
 
   useResponsiveSidebar();
 
@@ -22,19 +31,13 @@ export default function DashboardLayout({ children }) {
   const setSidebarCollapsed = useAppStore((state) => state.setSidebarCollapsed);
   const darkMode = useSettingsStore((state) => state.darkMode);
 
-  // Check authentication on mount
+  // Redirect (client-only side effect, not state) once we know there's really no session.
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
-      if (!token && !isAuthenticated) {
-        router.push("/login");
-        return;
-      }
-    }
-  }, [isAuthenticated, router]);
+    if (isChecking) router.replace(ROUTES.LOGIN);
+  }, [isChecking, router]);
 
-  // Show loading or redirect message while checking auth
-  if (!isAuthenticated && !accessToken && typeof window !== "undefined" && !window.localStorage.getItem(TOKEN_STORAGE_KEY)) {
+  // Show loading/redirect placeholder until the client-side auth check settles
+  if (isChecking) {
     return (
       <div
         style={{
@@ -47,7 +50,7 @@ export default function DashboardLayout({ children }) {
           color: "var(--gray-600)",
         }}
       >
-        Redirecting to login...
+        Loading…
       </div>
     );
   }

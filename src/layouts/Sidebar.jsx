@@ -8,6 +8,9 @@ import { getVisibleSidebarItems } from "@/config/sidebar";
 import { useAppStore } from "@/store/appStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useAuthStore } from "@/store/authStore";
+import { useLogout } from "@/hooks/useApi";
+import { useToast } from "@/hooks/useToast";
+import { ROUTES } from "@/config/routes";
 
 // Nav color palette for the active/hover states — ported 1:1 from the
 // Admin Panel.dc.html `navPal` map in the Claude Design source.
@@ -162,7 +165,8 @@ export default function Sidebar() {
 
   const darkMode = useSettingsStore((state) => state.darkMode);
   const role = useAuthStore((state) => state.user?.role ?? null);
-  const logout = useAuthStore((state) => state.logout);
+  const logoutMutation = useLogout();
+  const { showSuccess } = useToast();
 
   const items = useMemo(() => getVisibleSidebarItems(role), [role]);
   const navPal = getNavPalette(darkMode);
@@ -180,8 +184,12 @@ export default function Sidebar() {
     if (isMobile) setSidebarCollapsed(true);
   };
   const handleLogout = () => {
-    logout();
-    router.push("/login");
+    logoutMutation.mutate(undefined, {
+      onSettled: () => {
+        showSuccess("You have been logged out.");
+        router.push(ROUTES.LOGIN);
+      },
+    });
   };
 
   const navStyle = isMobile
@@ -247,6 +255,7 @@ export default function Sidebar() {
           type="button"
           title="Log out"
           onClick={handleLogout}
+          disabled={logoutMutation.isPending}
           style={{
             display: "flex",
             alignItems: "center",
@@ -256,7 +265,8 @@ export default function Sidebar() {
             padding: "10px 12px",
             borderRadius: "var(--radius-sm)",
             border: "none",
-            cursor: "pointer",
+            cursor: logoutMutation.isPending ? "not-allowed" : "pointer",
+            opacity: logoutMutation.isPending ? 0.6 : 1,
             textAlign: "left",
             background: "transparent",
             color: navPal.logoutColor,
@@ -275,7 +285,7 @@ export default function Sidebar() {
           <span style={{ display: "inline-flex" }}>
             <Icon name="arrow-left-on-rectangle" size={20} style={{ color: navPal.logoutColor }} />
           </span>
-          {expanded && <span>Log out</span>}
+          {expanded && <span>{logoutMutation.isPending ? "Logging out…" : "Log out"}</span>}
         </button>
       </div>
     </nav>
