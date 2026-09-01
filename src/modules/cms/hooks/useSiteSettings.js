@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useToast } from "@/hooks/useToast";
 import { SETTINGS, SITE_MENUS } from "../constants/settings.mock";
 
 const GROUPS = ["General", "Header", "Footer", "Social media"];
@@ -25,17 +26,8 @@ export function useSiteSettings() {
   });
   const [dirty, setDirty] = useState({});
   const [dragKey, setDragKey] = useState(null);
-  const [toast, setToast] = useState("");
-  const toastTimer = useRef(null);
+  const { showSuccess, showWarning } = useToast();
   const fileRefsMap = useRef(new Map());
-
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-
-  const flash = (msg) => {
-    clearTimeout(toastTimer.current);
-    setToast(msg);
-    toastTimer.current = setTimeout(() => setToast(""), 2600);
-  };
 
   const fileRef = (id) => {
     if (!fileRefsMap.current.has(id)) fileRefsMap.current.set(id, { current: null });
@@ -50,7 +42,7 @@ export function useSiteSettings() {
   const takeFile = (id, file) => {
     if (!file) return;
     if (!/^image\//.test(file.type)) {
-      flash("That file is not an image.");
+      showWarning("That file is not an image.");
       return;
     }
     const reader = new FileReader();
@@ -65,7 +57,7 @@ export function useSiteSettings() {
     const value = drafts[row.id];
     setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, value, updated_at: nowStamp() } : r)));
     setDirty((prev) => ({ ...prev, [row.id]: false }));
-    flash(`Updated "${row.label}".`);
+    showSuccess(`Updated "${row.label}".`);
   };
 
   const countByGroup = (g) => rows.filter((r) => r.group === g).length;
@@ -138,6 +130,5 @@ export function useSiteSettings() {
     activeGroupLabel: group,
     activeGroupHint: HINTS[group],
     activeRows,
-    toast,
   };
 }

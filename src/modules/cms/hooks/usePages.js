@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { slugify } from "@/utils/slugify";
+import { useToast } from "@/hooks/useToast";
 import { PAGES, PAGE_AUTHORS } from "../constants/pages.mock";
 
 const BLANK = {
@@ -46,19 +47,10 @@ export function usePages() {
   const [thumbDrag, setThumbDrag] = useState(false);
   const [ogDrag, setOgDrag] = useState(false);
   const [formError, setFormError] = useState(null);
-  const [toast, setToast] = useState("");
+  const { showSuccess } = useToast();
   const seqRef = useRef(0);
-  const toastTimer = useRef(null);
   const thumbFileRef = useRef(null);
   const ogFileRef = useRef(null);
-
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-
-  const flash = (msg) => {
-    clearTimeout(toastTimer.current);
-    setToast(msg);
-    toastTimer.current = setTimeout(() => setToast(""), 2800);
-  };
 
   const setForm = (patch) => {
     setFormState((prev) => ({ ...prev, ...patch }));
@@ -139,7 +131,7 @@ export function usePages() {
       setPages((prev) => prev.map((p) => (p.id === f.id ? { ...p, ...patch } : p)));
       setFormOpen(false);
       setFormError(null);
-      flash(`Saved "${patch.title}".`);
+      showSuccess(`Saved "${patch.title}".`);
       return;
     }
     const seq = seqRef.current + 1;
@@ -147,20 +139,20 @@ export function usePages() {
     setPages((prev) => prev.concat([{ id: `pg-new-${seq}`, ...patch, created_by: "You", created_at: nowStamp(), deleted_at: null }]));
     setFormOpen(false);
     setFormError(null);
-    flash(status === "published" ? `Published "${patch.title}".` : `Created "${patch.title}" as ${status}.`);
+    showSuccess(status === "published" ? `Published "${patch.title}".` : `Created "${patch.title}" as ${status}.`);
   };
 
   const setStatus = (id, status) => {
     const p = pages.find((x) => x.id === id);
     const published_at = status === "published" && !p.published_at ? nowStamp() : p.published_at;
     setPages((prev) => prev.map((x) => (x.id === id ? { ...x, status, published_at, updated_by: "You", updated_at: nowStamp() } : x)));
-    flash(`"${p.title}" is now ${status}.`);
+    showSuccess(`"${p.title}" is now ${status}.`);
   };
 
   const toggleFeature = (id) => {
     const p = pages.find((x) => x.id === id);
     setPages((prev) => prev.map((x) => (x.id === id ? { ...x, is_featured: !x.is_featured } : x)));
-    flash(p.is_featured ? `Removed "${p.title}" from featured.` : `"${p.title}" is now featured.`);
+    showSuccess(p.is_featured ? `Removed "${p.title}" from featured.` : `"${p.title}" is now featured.`);
   };
 
   const duplicate = (p) => {
@@ -169,14 +161,14 @@ export function usePages() {
     const stamp = nowStamp();
     const copy = { ...p, id: `pg-new-${seq}`, title: `${p.title} (copy)`, slug: `${p.slug}-copy-${seq}`, status: "draft", published_at: null, is_featured: false, created_by: "You", created_at: stamp, updated_by: "You", updated_at: stamp, deleted_at: null };
     setPages((prev) => prev.concat([copy]));
-    flash("Duplicated as a draft.");
+    showSuccess("Duplicated as a draft.");
   };
 
   const trash = (id) => {
     const p = pages.find((x) => x.id === id);
     const at = p.deleted_at ? null : nowStamp();
     setPages((prev) => prev.map((x) => (x.id === id ? { ...x, deleted_at: at } : x)));
-    flash(at ? `"${p.title}" moved to trash.` : `"${p.title}" restored.`);
+    showSuccess(at ? `"${p.title}" moved to trash.` : `"${p.title}" restored.`);
   };
 
   // ---- derived view ----
@@ -428,7 +420,5 @@ export function usePages() {
     save: () => commit(null),
     saveDraft: () => commit("draft"),
     formError,
-
-    toast,
   };
 }

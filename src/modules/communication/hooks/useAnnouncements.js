@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useToast } from "@/hooks/useToast";
 import { plainText } from "@/utils/plainText";
 import {
   ANNOUNCEMENTS,
@@ -49,17 +50,8 @@ export function useAnnouncements() {
   const [form, setForm] = useState({ ...BLANK });
   const [formError, setFormError] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
-  const [toast, setToast] = useState("");
+  const { showSuccess } = useToast();
   const seqRef = useRef(0);
-  const toastTimer = useRef(null);
-
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-
-  const flash = (msg) => {
-    clearTimeout(toastTimer.current);
-    setToast(msg);
-    toastTimer.current = setTimeout(() => setToast(""), 2800);
-  };
 
   const liveIn = (p) => items.find((a) => a.is_active && a.placement === p) || null;
 
@@ -69,13 +61,13 @@ export function useAnnouncements() {
     setItems((prev) => prev.map((a) => (a.id === id ? { ...a, is_active: true } : a.placement === item.placement ? { ...a, is_active: false } : a)));
     const where = (ANNOUNCEMENT_PLACEMENTS.find((p) => p.value === item.placement) || {}).label || "";
     const where_lc = where.toLowerCase();
-    flash(`Live in the ${where_lc} slot — "${item.title}" replaced any other ${where_lc} announcement.`);
+    showSuccess(`Live in the ${where_lc} slot — "${item.title}" replaced any other ${where_lc} announcement.`);
   };
 
   const deactivate = (id) => {
     const item = items.find((a) => a.id === id);
     setItems((prev) => prev.map((a) => (a.id === id ? { ...a, is_active: false } : a)));
-    flash(`${item ? item.title : id} turned off — that slot is empty now.`);
+    showSuccess(`${item ? item.title : id} turned off — that slot is empty now.`);
   };
 
   const openCreate = () => {
@@ -119,7 +111,7 @@ export function useAnnouncements() {
     seqRef.current = seq;
     const copy = { ...a, id: `AN-${411 + seq}`, title: `${a.title} (copy)`, is_active: false, impressions: 0, clicks: 0, dismissals: 0, created_by: "You" };
     setItems((prev) => [copy, ...prev]);
-    flash(`Duplicated as ${copy.id} — not live.`);
+    showSuccess(`Duplicated as ${copy.id} — not live.`);
   };
 
   const save = () => {
@@ -162,7 +154,7 @@ export function useAnnouncements() {
       setItems((prev) =>
         prev.map((a) => (a.id === f.id ? { ...a, ...patch, is_active: f.is_active } : f.is_active && a.placement === f.placement ? { ...a, is_active: false } : a))
       );
-      flash(f.is_active ? `${f.id} saved and set live.` : `Saved changes to ${f.id}.`);
+      showSuccess(f.is_active ? `${f.id} saved and set live.` : `Saved changes to ${f.id}.`);
       closeForm();
       return;
     }
@@ -171,7 +163,7 @@ export function useAnnouncements() {
     seqRef.current = seq;
     const item = { id: `AN-${411 + seq}`, ...patch, is_active: f.is_active, impressions: 0, clicks: 0, dismissals: 0, created_by: "You", created_at: nowStamp() };
     setItems((prev) => [item, ...(f.is_active ? prev.map((a) => (a.placement === f.placement ? { ...a, is_active: false } : a)) : prev)]);
-    flash(f.is_active ? `${item.id} created and set live.` : `${item.id} saved — not live yet.`);
+    showSuccess(f.is_active ? `${item.id} created and set live.` : `${item.id} saved — not live yet.`);
     closeForm();
   };
 
@@ -180,7 +172,7 @@ export function useAnnouncements() {
     const item = items.find((a) => a.id === id);
     setItems((prev) => prev.filter((a) => a.id !== id));
     setDeleteId(null);
-    flash(`Deleted ${item ? item.id : id}.`);
+    showSuccess(`Deleted ${item ? item.id : id}.`);
   };
 
   const filtered = useMemo(() => {
@@ -336,7 +328,5 @@ export function useAnnouncements() {
       : "",
     cancelDelete: () => setDeleteId(null),
     confirmDelete,
-
-    toast,
   };
 }

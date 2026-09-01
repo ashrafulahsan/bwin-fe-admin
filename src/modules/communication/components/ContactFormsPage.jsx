@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui";
-import { StatCardsGrid, SearchFiltersBar, Toast } from "@/components/common";
+import { StatCardsGrid, SearchFiltersBar } from "@/components/common";
 import { useAppStore } from "@/store/appStore";
 import { useContactForms } from "../hooks";
 import ContactTable from "./ContactTable";
@@ -54,8 +54,6 @@ export default function ContactFormsPage() {
         onReplyByEmail={cf.replyByEmail}
         onSave={cf.saveDetail}
       />
-
-      <Toast message={cf.toast} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import { useToast } from "@/hooks/useToast";
 import {
   NOTIFICATIONS,
   NOTIFICATION_ORIGIN_LABELS,
@@ -46,17 +47,8 @@ export function useNotifications() {
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState(BLANK_FORM);
   const [formError, setFormError] = useState(null);
-  const [toast, setToast] = useState("");
   const [seq, setSeq] = useState(0);
-  const toastTimer = useRef(null);
-
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-
-  const flash = (msg) => {
-    clearTimeout(toastTimer.current);
-    setToast(msg);
-    toastTimer.current = setTimeout(() => setToast(""), 2800);
-  };
+  const { showSuccess } = useToast();
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -218,7 +210,7 @@ export function useNotifications() {
     setCreateOpen(false);
     setForm(BLANK_FORM);
     setFormError(null);
-    flash(
+    showSuccess(
       finalStatus === "draft"
         ? `Draft saved — ${item.id}.`
         : finalStatus === "scheduled"
@@ -279,7 +271,5 @@ export function useNotifications() {
     submitLabel: form.scheduled_at ? "Schedule notification" : "Send notification",
     submitCreate: () => create("send"),
     saveDraft: () => create("draft"),
-
-    toast,
   };
 }

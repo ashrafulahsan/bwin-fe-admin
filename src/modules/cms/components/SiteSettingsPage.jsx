@@ -1,6 +1,5 @@
 "use client";
 
-import { Toast } from "@/components/common";
 import { useAppStore } from "@/store/appStore";
 import { useSiteSettings } from "../hooks";
 import SettingsGroupTabs from "./SettingsGroupTabs";
@@ -38,8 +37,6 @@ export default function SiteSettingsPage() {
           ))}
         </div>
       </div>
-
-      <Toast message={s.toast} />
     </div>
   );
 }

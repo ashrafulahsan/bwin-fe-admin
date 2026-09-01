@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import { useToast } from "@/hooks/useToast";
 import {
   SUPPORT_TICKETS,
   TICKET_CATEGORIES,
@@ -25,16 +26,7 @@ export function useSupportTickets() {
   const [draft, setDraft] = useState(null);
   const [replyDraft, setReplyDraft] = useState("");
   const [replyIsNote, setReplyIsNote] = useState(false);
-  const [toast, setToast] = useState("");
-  const toastTimer = useRef(null);
-
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-
-  const flash = (msg) => {
-    clearTimeout(toastTimer.current);
-    setToast(msg);
-    toastTimer.current = setTimeout(() => setToast(""), 2600);
-  };
+  const { showSuccess } = useToast();
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -102,7 +94,7 @@ export function useSupportTickets() {
     }));
     setReplyDraft("");
     setReplyIsNote(false);
-    flash(replyIsNote ? "Internal note added." : "Reply added to conversation.");
+    showSuccess(replyIsNote ? "Internal note added." : "Reply added to conversation.");
   };
 
   const toggleEscalate = () => setDraft((d) => ({ ...d, is_escalated: !d.is_escalated }));
@@ -110,7 +102,7 @@ export function useSupportTickets() {
   const saveDetail = () => {
     if (!draft) return;
     setTickets((prev) => prev.map((t) => (t.id === draft.id ? { ...draft, updated_at: "just now" } : t)));
-    flash(`Saved changes to ${draft.ticket_no}.`);
+    showSuccess(`Saved changes to ${draft.ticket_no}.`);
     closeDetail();
   };
 
@@ -124,7 +116,7 @@ export function useSupportTickets() {
     a.download = "bwin-support-tickets.csv";
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
-    flash(`Exported ${filtered.length} tickets to CSV.`);
+    showSuccess(`Exported ${filtered.length} tickets to CSV.`);
   };
 
   const statusOptions = [{ value: "all", label: "All statuses" }].concat(TICKET_STATUSES.map((v) => ({ value: v, label: TICKET_STATUS_LABELS[v] })));
@@ -211,7 +203,5 @@ export function useSupportTickets() {
     replyIsNote,
     onReplyNoteToggle: (e) => setReplyIsNote(e.target.checked),
     sendReply,
-
-    toast,
   };
 }

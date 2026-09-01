@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui";
-import { Toast } from "@/components/common";
 import { useAppStore } from "@/store/appStore";
 import { useTaxonomy } from "../hooks";
 import CategoryTypesList from "./CategoryTypesList";
@@ -90,8 +89,6 @@ export default function TaxonomyPage() {
           onSubmit={t.saveCategory}
         />
       )}
-
-      <Toast message={t.toast} />
     </div>
   );
 }

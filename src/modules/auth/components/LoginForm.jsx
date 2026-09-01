@@ -8,6 +8,7 @@ import { loginSchema } from "../validation";
 import { useLogin } from "../hooks";
 import { LOGIN_ROLE_TABS, LOGIN_SUBMIT_LABELS } from "../constants";
 import { ROUTES } from "@/config/routes";
+import { useToast } from "@/hooks/useToast";
 
 // Ported 1:1 from the Claude Design source (BWIN Consultants admin
 // panel/admin-panel-login.dc.html) — the split gradient/illustration panel,
@@ -56,6 +57,7 @@ export default function LoginForm() {
   const [role, setRole] = useState(LOGIN_ROLE_TABS[0].value);
   const [reveal, setReveal] = useState(false);
   const loginMutation = useLogin();
+  const { showSuccess, showError } = useToast();
 
   const {
     register,
@@ -68,10 +70,11 @@ export default function LoginForm() {
 
   const onSubmit = async (values) => {
     try {
-      await loginMutation.mutateAsync({ role, ...values });
+      const data = await loginMutation.mutateAsync({ role, ...values });
+      showSuccess(`Welcome back, ${data.user?.name || data.user?.email || "there"}!`);
       router.push(ROUTES.DASHBOARD);
-    } catch {
-      // surfaced below via loginMutation.error
+    } catch (error) {
+      showError(error?.response?.data?.message || "Something went wrong. Please try again.");
     }
   };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui";
-import { StatCardsGrid, Toast } from "@/components/common";
+import { StatCardsGrid } from "@/components/common";
 import { useAppStore } from "@/store/appStore";
 import { useArticles } from "../hooks";
 import ArticleFiltersBar from "./ArticleFiltersBar";
@@ -133,8 +133,6 @@ export default function ArticlesPage() {
           onSubmit={a.save}
         />
       )}
-
-      <Toast message={a.toast} />
     </div>
   );
 }

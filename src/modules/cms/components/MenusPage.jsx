@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui";
-import { Toast, ConfirmDialog } from "@/components/common";
+import { ConfirmDialog } from "@/components/common";
 import { useAppStore } from "@/store/appStore";
 import { useMenus } from "../hooks";
 import CategoryCards from "./CategoryCards";
@@ -89,8 +89,6 @@ export default function MenusPage() {
         onCancel={m.cancelTrash}
         onConfirm={m.confirmTrash}
       />
-
-      <Toast message={m.toast} />
     </div>
   );
 }

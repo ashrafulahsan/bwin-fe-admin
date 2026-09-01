@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui";
-import { StatCardsGrid, SearchFiltersBar, Toast, UnderlineTabs } from "@/components/common";
+import { StatCardsGrid, SearchFiltersBar, UnderlineTabs } from "@/components/common";
 import { useAppStore } from "@/store/appStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useNotifications } from "../hooks";
@@ -69,8 +69,6 @@ export default function NotificationsPage() {
           onSubmit={n.submitCreate}
         />
       )}
-
-      <Toast message={n.toast} />
     </div>
   );
 }

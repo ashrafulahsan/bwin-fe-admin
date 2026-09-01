@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { slugify } from "@/utils/slugify";
+import { useToast } from "@/hooks/useToast";
 import { CATEGORIES } from "../constants/taxonomy.mock";
 import { LIST_ENABLED_CATEGORY_IDS, MASTER_CRUD_FIELDS, MASTER_CRUDS, MASTER_CRUD_FIELD_VALUES } from "../constants/masterCruds.mock";
 
@@ -39,17 +40,8 @@ export function useList() {
   const [formValues, setFormValues] = useState({});
   const [slugTouched, setSlugTouched] = useState(false);
   const [formError, setFormError] = useState(null);
-  const [toast, setToast] = useState("");
+  const { showSuccess } = useToast();
   const seqRef = useRef(0);
-  const toastTimer = useRef(null);
-
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-
-  const flash = (msg) => {
-    clearTimeout(toastTimer.current);
-    setToast(msg);
-    toastTimer.current = setTimeout(() => setToast(""), 2800);
-  };
 
   const liveFields = (cId) => fields.filter((f) => f.category_id === cId && !f.deleted_at && f.status !== "inactive");
 
@@ -117,7 +109,7 @@ export function useList() {
     setCatId(patch.category_id);
     setEntryFormOpen(false);
     setFormError(null);
-    flash(`${f.id ? "Saved" : "Created"} "${patch.title}".`);
+    showSuccess(`${f.id ? "Saved" : "Created"} "${patch.title}".`);
   };
 
   const duplicate = (entry) => {
@@ -148,14 +140,14 @@ export function useList() {
       });
     setEntries((prev) => prev.concat([copy]));
     setValues((prev) => ({ ...prev, ...valuePatch }));
-    flash("Duplicated as a draft.");
+    showSuccess("Duplicated as a draft.");
   };
 
   const trashEntry = (id) => {
     const e = entries.find((x) => x.id === id);
     const at = e.deleted_at ? null : nowStamp();
     setEntries((prev) => prev.map((x) => (x.id === id ? { ...x, deleted_at: at } : x)));
-    flash(at ? `"${e.title}" moved to trash.` : `"${e.title}" restored.`);
+    showSuccess(at ? `"${e.title}" moved to trash.` : `"${e.title}" restored.`);
   };
 
   const nudge = (id, dir) => {
@@ -207,7 +199,7 @@ export function useList() {
       setFields((prev) => prev.map((x) => (x.id === f.id ? { ...x, ...patch } : x)));
       setFieldFormOpen(false);
       setFormError(null);
-      flash(`Saved field "${patch.field_name}".`);
+      showSuccess(`Saved field "${patch.field_name}".`);
       return;
     }
     const seq = seqRef.current + 1;
@@ -217,14 +209,14 @@ export function useList() {
     setFormError(null);
     setCatId(patch.category_id);
     setTab("fields");
-    flash(`Added "${patch.field_name}" to this category.`);
+    showSuccess(`Added "${patch.field_name}" to this category.`);
   };
 
   const trashField = (id) => {
     const f = fields.find((x) => x.id === id);
     const at = f.deleted_at ? null : nowStamp();
     setFields((prev) => prev.map((x) => (x.id === id ? { ...x, deleted_at: at } : x)));
-    flash(at ? `"${f.field_name}" removed from the form. Stored values are kept.` : `"${f.field_name}" restored.`);
+    showSuccess(at ? `"${f.field_name}" removed from the form. Stored values are kept.` : `"${f.field_name}" restored.`);
   };
 
   // ---- derived view ----
@@ -463,7 +455,5 @@ export function useList() {
       setFormError(null);
     },
     formError,
-
-    toast,
   };
 }

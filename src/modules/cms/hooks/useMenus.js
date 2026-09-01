@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useToast } from "@/hooks/useToast";
 import { MENUS, MENU_CATEGORIES } from "../constants/menus.mock";
 
 const BLANK = {
@@ -34,19 +35,10 @@ export function useMenus() {
   const [formError, setFormError] = useState(null);
   const [imageOver, setImageOver] = useState(false);
   const [trashId, setTrashId] = useState(null);
-  const [toast, setToast] = useState("");
   const [dirty, setDirty] = useState(false);
+  const { showSuccess, showWarning } = useToast();
   const seqRef = useRef(0);
-  const toastTimer = useRef(null);
   const fileRef = useRef(null);
-
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-
-  const flash = (msg) => {
-    clearTimeout(toastTimer.current);
-    setToast(msg);
-    toastTimer.current = setTimeout(() => setToast(""), 2800);
-  };
 
   const live = () => items.filter((i) => i.menu_category_id === cat);
 
@@ -67,7 +59,7 @@ export function useMenus() {
   const move = (dId, targetId, pos) => {
     if (!dId) return;
     if (pos !== "root" && (dId === targetId || isDescendant(targetId, dId))) {
-      flash("An item cannot be nested inside itself.");
+      showWarning("An item cannot be nested inside itself.");
       return;
     }
     const drag = items.find((i) => i.id === dId);
@@ -108,7 +100,7 @@ export function useMenus() {
     setDirty(true);
 
     const label = pos === "inside" ? `nested under "${target.title}"` : pos === "root" ? "moved to the top level" : "reordered";
-    flash(`"${drag.title}" ${label}.`);
+    showSuccess(`"${drag.title}" ${label}.`);
   };
 
   const nudge = (id, dir) => {
@@ -125,7 +117,7 @@ export function useMenus() {
     const sibs = childrenOf(node.parent_id);
     const at = sibs.findIndex((i) => i.id === id);
     if (at <= 0) {
-      flash("Nothing above it to nest under.");
+      showWarning("Nothing above it to nest under.");
       return;
     }
     move(id, sibs[at - 1].id, "inside");
@@ -134,7 +126,7 @@ export function useMenus() {
   const outdent = (id) => {
     const node = items.find((i) => i.id === id);
     if (!node.parent_id) {
-      flash("Already at the top level.");
+      showWarning("Already at the top level.");
       return;
     }
     move(id, node.parent_id, "after");
@@ -184,7 +176,7 @@ export function useMenus() {
       setForm({ ...BLANK });
       setFormError(null);
       setDirty(true);
-      flash(`Saved "${patch.title}".`);
+      showSuccess(`Saved "${patch.title}".`);
       return;
     }
     const seq = seqRef.current + 1;
@@ -196,7 +188,7 @@ export function useMenus() {
     setFormError(null);
     if (item.parent_id) setCollapsed((prev) => ({ ...prev, [item.parent_id]: false }));
     setDirty(true);
-    flash(`Added "${item.title}"${item.parent_id ? " as a submenu item." : " to the top level."}`);
+    showSuccess(`Added "${item.title}"${item.parent_id ? " as a submenu item." : " to the top level."}`);
   };
 
   // ---- derived view ----
@@ -316,7 +308,7 @@ export function useMenus() {
             if (i.deleted_at) {
               setItems((prev) => prev.map((x) => (x.id === i.id ? { ...x, deleted_at: null } : x)));
               setDirty(true);
-              flash(`Restored "${i.title}".`);
+              showSuccess(`Restored "${i.title}".`);
             } else {
               setTrashId(i.id);
             }
@@ -395,13 +387,13 @@ export function useMenus() {
     saveOrder: () => {
       setBaseline(items);
       setDirty(false);
-      flash("Order saved — menus table updated.");
+      showSuccess("Order saved — menus table updated.");
     },
     revertOrder: () => {
       setItems(baseline);
       setDirty(false);
       setCollapsed({});
-      flash("Reverted to the last saved order.");
+      showSuccess("Reverted to the last saved order.");
     },
 
     rootDropBg: rootDrop ? "var(--orange-50)" : "var(--surface-sunken)",
@@ -503,9 +495,7 @@ export function useMenus() {
       setItems((prev) => prev.map((i) => (ids.has(i.id) ? { ...i, deleted_at: stamp, updated_at: stamp, updated_by: "You" } : i)));
       setTrashId(null);
       setDirty(true);
-      flash(`Moved ${ids.size} item${ids.size === 1 ? "" : "s"} to trash.`);
+      showSuccess(`Moved ${ids.size} item${ids.size === 1 ? "" : "s"} to trash.`);
     },
-
-    toast,
   };
 }

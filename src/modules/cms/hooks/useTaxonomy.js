@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { slugify } from "@/utils/slugify";
+import { useToast } from "@/hooks/useToast";
 import { CATEGORY_TYPES, CATEGORIES, CATEGORY_USAGE } from "../constants/taxonomy.mock";
 
 const TBLANK = { id: null, name: "", slug: "", description: "", status: "active" };
@@ -24,17 +25,8 @@ export function useTaxonomy() {
   const [catForm, setCatFormState] = useState({ ...CBLANK });
   const [slugTouched, setSlugTouched] = useState(false);
   const [formError, setFormError] = useState(null);
-  const [toast, setToast] = useState("");
+  const { showSuccess, showWarning } = useToast();
   const seqRef = useRef(0);
-  const toastTimer = useRef(null);
-
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-
-  const flash = (msg) => {
-    clearTimeout(toastTimer.current);
-    setToast(msg);
-    toastTimer.current = setTimeout(() => setToast(""), 2800);
-  };
 
   const setType = (patch) => {
     setTypeFormState((prev) => ({ ...prev, ...patch }));
@@ -72,7 +64,7 @@ export function useTaxonomy() {
       setTypes((prev) => prev.map((t) => (t.id === f.id ? { ...t, ...patch } : t)));
       setTypeFormOpen(false);
       setFormError(null);
-      flash(`Saved "${patch.name}".`);
+      showSuccess(`Saved "${patch.name}".`);
       return;
     }
     const seq = seqRef.current + 1;
@@ -82,7 +74,7 @@ export function useTaxonomy() {
     setTypeFormOpen(false);
     setFormError(null);
     setTypeId(row.id);
-    flash(`Created "${patch.name}".`);
+    showSuccess(`Created "${patch.name}".`);
   };
 
   const saveCategory = () => {
@@ -123,7 +115,7 @@ export function useTaxonomy() {
       setCats((prev) => prev.map((c) => (c.id === f.id ? { ...c, ...patch } : c)));
       setCatFormOpen(false);
       setFormError(null);
-      flash(`Saved "${patch.name}".`);
+      showSuccess(`Saved "${patch.name}".`);
       return;
     }
     const seq = seqRef.current + 1;
@@ -134,18 +126,18 @@ export function useTaxonomy() {
     setFormError(null);
     setTypeId(patch.category_type_id);
     if (patch.parent_category_id) setCollapsed((prev) => ({ ...prev, [patch.parent_category_id]: false }));
-    flash(`Created "${patch.name}".`);
+    showSuccess(`Created "${patch.name}".`);
   };
 
   const trashType = (id) => {
     const t = types.find((x) => x.id === id);
     if (!t.deleted_at && catsOfType(id).filter((c) => !c.deleted_at).length) {
-      flash(`Move or trash its categories first — "${t.name}" is still in use.`);
+      showWarning(`Move or trash its categories first — "${t.name}" is still in use.`);
       return;
     }
     const at = t.deleted_at ? null : nowStamp();
     setTypes((prev) => prev.map((x) => (x.id === id ? { ...x, deleted_at: at } : x)));
-    flash(at ? `"${t.name}" moved to trash.` : `"${t.name}" restored.`);
+    showSuccess(at ? `"${t.name}" moved to trash.` : `"${t.name}" restored.`);
   };
 
   const trashCategory = (id) => {
@@ -154,7 +146,7 @@ export function useTaxonomy() {
     const kids = at ? cats.filter((x) => x.parent_category_id === id && !x.deleted_at).map((x) => x.id) : [];
     setCats((prev) => prev.map((x) => (x.id === id || kids.includes(x.id) ? { ...x, deleted_at: at } : x)));
     const tail = kids.length ? ` and ${kids.length} subcategor${kids.length === 1 ? "y" : "ies"}` : "";
-    flash(at ? `"${c.name}"${tail} moved to trash.` : `"${c.name}" restored.`);
+    showSuccess(at ? `"${c.name}"${tail} moved to trash.` : `"${c.name}" restored.`);
   };
 
   const editCategory = (c) => {
@@ -363,7 +355,5 @@ export function useTaxonomy() {
       setFormError(null);
     },
     formError,
-
-    toast,
   };
 }

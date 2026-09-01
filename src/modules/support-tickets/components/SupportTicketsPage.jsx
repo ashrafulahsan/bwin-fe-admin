@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui";
-import { StatCardsGrid, SearchFiltersBar, Toast } from "@/components/common";
+import { StatCardsGrid, SearchFiltersBar } from "@/components/common";
 import { useAppStore } from "@/store/appStore";
 import { useSupportTickets } from "../hooks";
 import TicketTable from "./TicketTable";
@@ -62,8 +62,6 @@ export default function SupportTicketsPage() {
           onClose={t.closeDetail}
         />
       )}
-
-      <Toast message={t.toast} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import { useToast } from "@/hooks/useToast";
 import {
   CONTACT_SUBMISSIONS,
   CONTACT_INTERESTS,
@@ -30,16 +31,7 @@ export function useContactForms() {
   const [rangeFilter, setRangeFilter] = useState("all");
   const [detailId, setDetailId] = useState(null);
   const [draft, setDraft] = useState(null);
-  const [toast, setToast] = useState("");
-  const toastTimer = useRef(null);
-
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-
-  const flash = (msg) => {
-    clearTimeout(toastTimer.current);
-    setToast(msg);
-    toastTimer.current = setTimeout(() => setToast(""), 2600);
-  };
+  const { showSuccess, showInfo } = useToast();
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -70,7 +62,7 @@ export function useContactForms() {
   const setRowStatus = (id, status) => {
     setSubmissions((prev) => prev.map((r) => (r.id === id ? { ...r, status, updated_at: "just now" } : r)));
     setDraft((d) => (d && d.id === id ? { ...d, status } : d));
-    flash(`Status updated to "${CONTACT_STATUS_LABELS[status] || status}".`);
+    showSuccess(`Status updated to "${CONTACT_STATUS_LABELS[status] || status}".`);
   };
 
   const openDetail = (row) => {
@@ -89,11 +81,11 @@ export function useContactForms() {
     setSubmissions((prev) =>
       prev.map((r) => (r.id === draft.id ? { ...r, status: draft.status, assigned_to: draft.assigned_to || null, internal_note: draft.internal_note, updated_at: "just now" } : r))
     );
-    flash(`Saved changes to ${draft.id}.`);
+    showSuccess(`Saved changes to ${draft.id}.`);
     closeDetail();
   };
 
-  const replyByEmail = () => flash(`Opening reply to ${draft ? draft.email : ""}…`);
+  const replyByEmail = () => showInfo(`Opening reply to ${draft ? draft.email : ""}…`);
 
   const exportCsv = () => {
     const cols = ["id", "full_name", "email", "phone", "interested_in", "status", "created_at"];
@@ -105,7 +97,7 @@ export function useContactForms() {
     a.download = "bwin-contact-submissions.csv";
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
-    flash(`Exported ${filtered.length} submissions to CSV.`);
+    showSuccess(`Exported ${filtered.length} submissions to CSV.`);
   };
 
   const statusOptions = [{ value: "all", label: "All statuses" }].concat(CONTACT_STATUSES.map((v) => ({ value: v, label: CONTACT_STATUS_LABELS[v] || v })));
@@ -153,7 +145,5 @@ export function useContactForms() {
 
     statusLabels: CONTACT_STATUS_LABELS,
     statusTones: CONTACT_STATUS_TONES,
-
-    toast,
   };
 }

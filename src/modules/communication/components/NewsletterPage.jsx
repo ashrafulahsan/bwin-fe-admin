@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui";
-import { StatCardsGrid, SearchFiltersBar, Toast, UnderlineTabs } from "@/components/common";
+import { StatCardsGrid, SearchFiltersBar, UnderlineTabs } from "@/components/common";
 import { useAppStore } from "@/store/appStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useNewsletter } from "../hooks";
@@ -83,8 +83,6 @@ export default function NewsletterPage() {
       {nl.addOpen && (
         <AddSubscriberModal form={nl.subForm} onFieldChange={nl.setSubFormField} segmentOptions={nl.segmentOptions} formError={nl.subFormError} onClose={nl.closeAdd} onSubmit={nl.submitAdd} />
       )}
-
-      <Toast message={nl.toast} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import { useToast } from "@/hooks/useToast";
 import {
   NEWSLETTER_CAMPAIGNS,
   NEWSLETTER_SUBSCRIBERS,
@@ -54,17 +55,8 @@ export function useNewsletter() {
   const [subForm, setSubForm] = useState(BLANK_SUB_FORM);
   const [subFormError, setSubFormError] = useState(null);
 
-  const [toast, setToast] = useState("");
   const [seq, setSeq] = useState(0);
-  const toastTimer = useRef(null);
-
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-
-  const flash = (msg) => {
-    clearTimeout(toastTimer.current);
-    setToast(msg);
-    toastTimer.current = setTimeout(() => setToast(""), 2800);
-  };
+  const { showSuccess } = useToast();
 
   const onCampaigns = tab === "campaigns";
 
@@ -152,12 +144,12 @@ export function useNewsletter() {
   const setSubscriberStatus = (id, status) => {
     const sub = subscribers.find((u) => u.id === id);
     setSubscribers((prev) => prev.map((u) => (u.id === id ? { ...u, status } : u)));
-    if (sub) flash(`${sub.email} marked ${(NEWSLETTER_SUB_STATUS_LABELS[status] || status).toLowerCase()}.`);
+    if (sub) showSuccess(`${sub.email} marked ${(NEWSLETTER_SUB_STATUS_LABELS[status] || status).toLowerCase()}.`);
   };
   const removeSubscriber = (id) => {
     const sub = subscribers.find((u) => u.id === id);
     setSubscribers((prev) => prev.filter((u) => u.id !== id));
-    if (sub) flash(`Removed ${sub.email} from the list.`);
+    if (sub) showSuccess(`Removed ${sub.email} from the list.`);
   };
 
   const subscriberRows = subFiltered.map((u) => ({
@@ -265,7 +257,7 @@ export function useNewsletter() {
       setComposeOpen(false);
       setForm(BLANK_FORM);
       setFormError(null);
-      flash(`Saved changes to ${form.id}.`);
+      showSuccess(`Saved changes to ${form.id}.`);
       return;
     }
 
@@ -296,7 +288,7 @@ export function useNewsletter() {
     setComposeOpen(false);
     setForm(BLANK_FORM);
     setFormError(null);
-    flash(
+    showSuccess(
       status === "draft"
         ? `Draft saved — ${item.id}.`
         : status === "scheduled"
@@ -305,7 +297,7 @@ export function useNewsletter() {
     );
   };
 
-  const sendTest = () => flash("Test email sent to hello@bwinconsultants.com.");
+  const sendTest = () => showSuccess("Test email sent to hello@bwinconsultants.com.");
 
   const openAdd = () => {
     setAddOpen(true);
@@ -346,7 +338,7 @@ export function useNewsletter() {
     setSubscribers((prev) => [item, ...prev]);
     setSeq(nextSeq);
     setAddOpen(false);
-    flash(`Added ${item.email} — opt-in email sent.`);
+    showSuccess(`Added ${item.email} — opt-in email sent.`);
   };
 
   const primaryActionLabel = onCampaigns ? "New campaign" : "Add subscriber";
@@ -363,7 +355,7 @@ export function useNewsletter() {
       a.download = "bwin-newsletter-campaigns.csv";
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
-      flash(`Exported ${campFiltered.length} campaigns to CSV.`);
+      showSuccess(`Exported ${campFiltered.length} campaigns to CSV.`);
     } else {
       const cols = ["id", "full_name", "email", "status", "segment", "source", "open_rate", "subscribed_at"];
       const esc = (v) => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`;
@@ -374,7 +366,7 @@ export function useNewsletter() {
       a.download = "bwin-newsletter-subscribers.csv";
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
-      flash(`Exported ${subFiltered.length} subscribers to CSV.`);
+      showSuccess(`Exported ${subFiltered.length} subscribers to CSV.`);
     }
   };
 
@@ -455,7 +447,5 @@ export function useNewsletter() {
     setSubFormField,
     subFormError,
     submitAdd,
-
-    toast,
   };
 }

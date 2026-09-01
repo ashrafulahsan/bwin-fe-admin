@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui";
-import { SearchFiltersBar, Toast, ConfirmDialog } from "@/components/common";
+import { SearchFiltersBar, ConfirmDialog } from "@/components/common";
 import { useAppStore } from "@/store/appStore";
 import { useAnnouncements } from "../hooks";
 import SlotPreviewGrid from "./SlotPreviewGrid";
@@ -102,8 +102,6 @@ export default function AnnouncementsPage() {
         onCancel={a.cancelDelete}
         onConfirm={a.confirmDelete}
       />
-
-      <Toast message={a.toast} />
     </div>
   );
 }

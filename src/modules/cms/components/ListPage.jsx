@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui";
-import { Toast } from "@/components/common";
 import { useAppStore } from "@/store/appStore";
 import { useList } from "../hooks";
 import ListCategoryPane from "./ListCategoryPane";
@@ -110,8 +109,6 @@ export default function ListPage() {
           onSubmit={l.saveField}
         />
       )}
-
-      <Toast message={l.toast} />
     </div>
   );
 }

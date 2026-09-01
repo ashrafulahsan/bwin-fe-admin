@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui";
-import { StatCardsGrid, Toast } from "@/components/common";
+import { StatCardsGrid } from "@/components/common";
 import { useAppStore } from "@/store/appStore";
 import { usePages } from "../hooks";
 import PageFiltersBar from "./PageFiltersBar";
@@ -126,8 +126,6 @@ export default function PagesPage() {
           onSubmit={p.save}
         />
       )}
-
-      <Toast message={p.toast} />
     </div>
   );
 }
