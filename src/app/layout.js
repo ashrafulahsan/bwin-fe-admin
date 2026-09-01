@@ -2,6 +2,9 @@ import { Space_Grotesk, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/providers/QueryProvider";
 import AuthProvider from "@/providers/AuthProvider";
+import ToastProvider from "@/context/ToastContext";
+import Toast from "@/components/ui/Toast";
+import { TOAST_POSITIONS } from "@/constants/toastTypes";
 import { APP_NAME } from "@/constants/constants";
 
 // Font pairing pinned by the design system: Space Grotesk (display/headings),
@@ -37,9 +40,12 @@ export default function RootLayout({ children }) {
       className={`${spaceGrotesk.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}
     >
       <body>
-        <QueryProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </QueryProvider>
+        <ToastProvider position={TOAST_POSITIONS.TOP_RIGHT}>
+          <QueryProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </QueryProvider>
+          <Toast />
+        </ToastProvider>
       </body>
     </html>
   );
