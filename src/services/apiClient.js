@@ -1,12 +1,17 @@
 import axios from "axios";
-import { API_BASE_URL, TOKEN_STORAGE_KEY } from "@/constants/constants";
+import { API_BASE_URL, TOKEN_STORAGE_KEY, REFRESH_TOKEN_STORAGE_KEY } from "@/constants/constants";
 
 // Base HTTP client. Module-level services (e.g. modules/auth/services) should build on this
 // rather than calling axios/fetch directly.
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL || "http://127.0.0.1:8000/api/v1",
+  timeout: 30000,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
+// Request interceptor - Add auth token to all requests
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
@@ -15,6 +20,63 @@ apiClient.interceptors.request.use((config) => {
     }
   }
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
-// TODO: response interceptor for refresh-token handling on 401.
+// Response interceptor - Handle errors and token refresh
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Handle 401 Unauthorized - attempt token refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        if (typeof window !== "undefined") {
+          const refreshToken = window.localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+          if (refreshToken) {
+            const response = await axios.post(
+              `${API_BASE_URL || "http://127.0.0.1:8000/api/v1"}/auth/refresh`,
+              { refresh_token: refreshToken }
+            );
+
+            const newAccessToken = response.data.access_token;
+            window.localStorage.setItem(TOKEN_STORAGE_KEY, newAccessToken);
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            return apiClient(originalRequest);
+          }
+        }
+      } catch (refreshError) {
+        // Refresh failed - redirect to login
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+          window.localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+          window.location.href = "/login";
+        }
+        return Promise.reject(refreshError);
+      }
+    }
+
+    // Handle 403 Forbidden
+    if (error.response?.status === 403) {
+      console.error("Access forbidden:", error.response?.data?.message);
+    }
+
+    // Handle 404 Not Found
+    if (error.response?.status === 404) {
+      console.warn("Resource not found:", error.response?.data?.message);
+    }
+
+    // Handle 500+ Server errors
+    if (error.response?.status >= 500) {
+      console.error("Server error:", error.response?.data?.message);
+    }
+
+    return Promise.reject(error);
+  }
+);
