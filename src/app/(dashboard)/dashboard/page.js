@@ -1,5 +1,11 @@
+"use client";
+
+import { useAuthStore } from "@/store/authStore";
 import DashboardOverview from "@/modules/dashboard/components/DashboardOverview";
 
 export default function DashboardPage() {
-  return <DashboardOverview greetingName="Admin" />;
+  const user = useAuthStore((state) => state.user);
+  const greetingName = user?.name || user?.email || "Admin";
+
+  return <DashboardOverview greetingName={greetingName} />;
 }

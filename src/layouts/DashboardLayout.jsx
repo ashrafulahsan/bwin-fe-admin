@@ -1,18 +1,56 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { useAppStore } from "@/store/appStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useResponsiveSidebar } from "@/hooks";
+import { useAuthStore } from "@/store/authStore";
+import { TOKEN_STORAGE_KEY } from "@/constants/constants";
 
 export default function DashboardLayout({ children }) {
+  const router = useRouter();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const accessToken = useAuthStore((state) => state.accessToken);
+
   useResponsiveSidebar();
 
   const isMobile = useAppStore((state) => state.isMobile);
   const isSidebarCollapsed = useAppStore((state) => state.isSidebarCollapsed);
   const setSidebarCollapsed = useAppStore((state) => state.setSidebarCollapsed);
   const darkMode = useSettingsStore((state) => state.darkMode);
+
+  // Check authentication on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
+      if (!token && !isAuthenticated) {
+        router.push("/login");
+        return;
+      }
+    }
+  }, [isAuthenticated, router]);
+
+  // Show loading or redirect message while checking auth
+  if (!isAuthenticated && !accessToken && typeof window !== "undefined" && !window.localStorage.getItem(TOKEN_STORAGE_KEY)) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          background: "var(--surface-page)",
+          fontSize: 14,
+          color: "var(--gray-600)",
+        }}
+      >
+        Redirecting to login...
+      </div>
+    );
+  }
 
   const showScrim = isMobile && !isSidebarCollapsed;
 
