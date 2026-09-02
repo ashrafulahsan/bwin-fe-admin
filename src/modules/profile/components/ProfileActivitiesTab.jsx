@@ -2,7 +2,23 @@
 
 import { Icon } from "@/components/ui";
 
-export default function ProfileActivitiesTab({ activities }) {
+export default function ProfileActivitiesTab({ activities, loading, empty }) {
+  if (loading) {
+    return (
+      <div style={{ padding: "32px 24px", textAlign: "center", fontSize: "var(--fs-body-sm)", color: "var(--text-muted)" }}>
+        Loading activity…
+      </div>
+    );
+  }
+
+  if (empty) {
+    return (
+      <div style={{ padding: "32px 24px", textAlign: "center", fontSize: "var(--fs-body-sm)", color: "var(--text-muted)" }}>
+        No activity recorded yet.
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: "8px 0 4px" }}>
       {activities.map((row, i) => (

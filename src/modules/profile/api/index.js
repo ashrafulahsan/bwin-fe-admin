@@ -11,3 +11,7 @@ export function updateMyDetailsRequest(payload) {
 export function updateMyProfileRequest(payload) {
   return apiClient.patch("/auth/me", payload);
 }
+
+export function getMyActivityRequest(params) {
+  return apiClient.get("/my-activity-logs", { params });
+}

@@ -68,11 +68,5 @@ export const PROFILE_GROUPS = [
   },
 ];
 
-export const PROFILE_ACTIVITIES = [
-  { action: "Updated role permissions", module: "Users", created_at: "2026-08-22 09:12", ip_address: "41.203.12.8", icon: "identification", tone: "navy" },
-  { action: "Approved new course submission", module: "Skill development", created_at: "2026-08-21 16:40", ip_address: "41.203.12.8", icon: "academic-cap", tone: "orange" },
-  { action: "Exported financial report", module: "Reports", created_at: "2026-08-21 11:05", ip_address: "41.203.12.8", icon: "chart-bar", tone: "tan" },
-  { action: 'Published article "Automation in 2026"', module: "CMS", created_at: "2026-08-20 14:22", ip_address: "41.203.12.8", icon: "newspaper", tone: "navy" },
-  { action: "Replied to support ticket #482", module: "Communication", created_at: "2026-08-20 09:48", ip_address: "41.203.12.8", icon: "chat-bubble-left-right", tone: "orange" },
-  { action: "Signed in", module: "Auth", created_at: "2026-08-20 08:55", ip_address: "41.203.12.8", icon: "user", tone: "neutral" },
-];
+// Activities now come from GET /my-activity-logs (see useProfile.js) —
+// icon/tone per module live there too, next to FAMILIES.

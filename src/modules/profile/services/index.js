@@ -1,4 +1,5 @@
 import {
+  getMyActivityRequest,
   getMyDetailsRequest,
   updateMyDetailsRequest,
   updateMyProfileRequest,
@@ -21,4 +22,10 @@ export async function updateMyDetails(payload) {
 export async function updateMyProfile(payload) {
   const response = await updateMyProfileRequest(payload);
   return response.data?.data;
+}
+
+// A paginated `Page<ActivityLogSummary>`: `{items, meta}`.
+export async function getMyActivity(params) {
+  const response = await getMyActivityRequest(params);
+  return response.data?.data ?? { items: [], meta: null };
 }

@@ -5,8 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useCurrentUser } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
-import { getMyDetails, updateMyDetails, updateMyProfile } from "../services";
-import { BASIC_FIELDS, PROFILE_GROUPS, PROFILE_ACTIVITIES } from "../constants/adminProfile.mock";
+import { getMyActivity, getMyDetails, updateMyDetails, updateMyProfile } from "../services";
+import { BASIC_FIELDS, PROFILE_GROUPS } from "../constants/adminProfile.mock";
 
 // Basic info has no mock fallback — it's either the real value from
 // GET /auth/me or blank.
@@ -56,6 +56,59 @@ const FAMILIES = {
   neutral: { light: ["var(--gray-100)", "var(--gray-600)"], dark: ["var(--gray-700)", "var(--gray-200)"] },
 };
 
+// One row per ActivityModule (app/modules/activity_logs/models/activity_log.py) —
+// unlisted/unrecognized modules fall back to the defaults below.
+const MODULE_ICONS = {
+  auth: "identification",
+  users: "user-group",
+  roles: "user-group",
+  permissions: "identification",
+  settings: "cog-6-tooth",
+  translations: "document-text",
+  categories: "tag",
+  blogs: "newspaper",
+  pages: "document-text",
+  menus: "rectangle-stack",
+  master_cruds: "clipboard-document-list",
+  courses: "academic-cap",
+  consultancies: "briefcase",
+  automations: "bolt",
+  subscriptions: "envelope",
+  cms: "document-text",
+  lms: "academic-cap",
+  support: "chat-bubble-left-right",
+  inquiries: "chat-bubble-left",
+  media: "photo",
+  notifications: "bell",
+  reports: "chart-bar",
+  system: "cog-6-tooth",
+};
+const MODULE_TONES = {
+  auth: "neutral",
+  users: "navy",
+  roles: "navy",
+  courses: "orange",
+  lms: "orange",
+  blogs: "navy",
+  pages: "navy",
+  cms: "navy",
+  automations: "orange",
+  consultancies: "tan",
+  support: "orange",
+  inquiries: "orange",
+  notifications: "orange",
+  reports: "tan",
+};
+const DEFAULT_ICON = "clock";
+const DEFAULT_TONE = "neutral";
+
+const formatTimestamp = (iso) => {
+  const d = new Date(iso);
+  if (!iso || Number.isNaN(d.getTime())) return iso || "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 // Drops blank/absent values so a field left empty in the form is treated as
 // "leave unchanged" rather than "clear it" — a required identifier
 // (first_name, email, ...) can't be blanked out by accident this way.
@@ -73,6 +126,14 @@ export function useProfile() {
   const { data: myDetails, isSuccess: detailsLoaded, isError: detailsFailed } = useQuery({
     queryKey: ["myDetails"],
     queryFn: getMyDetails,
+  });
+  const {
+    data: myActivity,
+    isLoading: activitiesLoading,
+    isError: activitiesFailed,
+  } = useQuery({
+    queryKey: ["myActivity"],
+    queryFn: () => getMyActivity({ page_size: 20 }),
   });
 
   const [profileFields, setProfileFields] = useState({ ...BLANK_BASIC, ...BLANK_DETAILS });
@@ -142,6 +203,10 @@ export function useProfile() {
     if (detailsFailed) showError("Couldn't load your details from the server.");
   }, [detailsFailed, showError]);
 
+  useEffect(() => {
+    if (activitiesFailed) showError("Couldn't load your activity from the server.");
+  }, [activitiesFailed, showError]);
+
   const fam = (name) => {
     const [bg, color] = FAMILIES[name][darkMode ? "dark" : "light"];
     return { bg, color };
@@ -165,14 +230,19 @@ export function useProfile() {
     })),
   }));
 
-  const profileActivities = PROFILE_ACTIVITIES.map((r) => ({
-    action: r.action,
-    module: r.module,
-    timestamp: r.created_at,
-    ip: r.ip_address,
-    icon: r.icon,
-    ...fam(r.tone),
-  }));
+  const profileActivities = (myActivity?.items || []).map((entry) => {
+    const failed = entry.status === "failure";
+    return {
+      action: entry.description,
+      module: entry.module,
+      timestamp: formatTimestamp(entry.created_at),
+      ip: entry.ip_address || "—",
+      icon: failed ? "x-mark" : MODULE_ICONS[entry.module] || DEFAULT_ICON,
+      ...(failed
+        ? { bg: "var(--state-error-bg)", color: "var(--state-error)" }
+        : fam(MODULE_TONES[entry.module] || DEFAULT_TONE)),
+    };
+  });
 
   const hasCustomAvatar = !!pf.avatar_url;
 
@@ -269,6 +339,8 @@ export function useProfile() {
 
     detailGroups,
     profileActivities,
+    activitiesLoading,
+    noActivities: !activitiesLoading && profileActivities.length === 0,
     profileTabs,
     profileTab,
 

@@ -69,7 +69,13 @@ export default function ProfilePage() {
             cancelDetails={p.cancelDetails}
           />
         )}
-        {p.profileTab === "activities" && <ProfileActivitiesTab activities={p.profileActivities} />}
+        {p.profileTab === "activities" && (
+          <ProfileActivitiesTab
+            activities={p.profileActivities}
+            loading={p.activitiesLoading}
+            empty={p.noActivities}
+          />
+        )}
         {p.profileTab === "password" && <ProfilePasswordTab />}
       </div>
     </div>
