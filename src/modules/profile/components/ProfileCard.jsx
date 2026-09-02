@@ -29,9 +29,9 @@ export default function ProfileCard({
           <>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontFamily: "var(--font-display)", fontWeight: "var(--fw-bold)", fontSize: 22, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>{profile.fullName}</div>
-              <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-muted)", marginTop: 2 }}>
-                {profile.designation} · {profile.department}
-              </div>
+              {profile.subtitle && (
+                <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-muted)", marginTop: 2 }}>{profile.subtitle}</div>
+              )}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
               <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>{profile.email}</div>

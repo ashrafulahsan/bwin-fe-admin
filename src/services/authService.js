@@ -53,11 +53,12 @@ export const authService = {
 
   /**
    * Get current user info
-   * @returns {Promise<{user}>}
+   * @returns {Promise<UserRead>} the signed-in user, unwrapped from the
+   *   `{success, message, data}` envelope every backend response uses
    */
   getCurrentUser: async () => {
     const response = await apiClient.get("/auth/me");
-    return response.data;
+    return response.data?.data;
   },
 
   /**

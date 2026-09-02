@@ -1,12 +1,10 @@
-// public.users + public.admin_profiles. In future all data will come from the database.
+// public.admin_profiles doesn't exist yet — these fields have no backend
+// source, so they stay mock for the Details tab only. Basic info (name,
+// email, phone, avatar, bio, language) comes from GET /auth/me, and
+// designation/department have no backend source at all — both come out
+// blank instead of mock; see BLANK_BASIC in ../hooks/useProfile.js, which is
+// why those keys are not listed here.
 export const ADMIN_PROFILE = {
-  first_name: "Amara",
-  last_name: "Okafor",
-  email: "amara.okafor@bwin.com",
-  phone: "+8801723333166",
-  avatar_url: "uploads/admin-profile.png",
-  language: "English (UK)",
-  bio: "Operations lead at BWIN Consultants, focused on business automation rollouts and client onboarding. Works with the skill development and consultancy teams to keep delivery on schedule.",
   gender: "Female",
   date_of_birth: "1989-03-11",
   nationality: "Bangladeshi",
@@ -14,8 +12,6 @@ export const ADMIN_PROFILE = {
   street_address: "House 42, Road 11, Banani",
   city: "Dhaka",
   country: "Bangladesh",
-  designation: "Head of operations",
-  department: "Operations",
   organization: "BWIN Consultants",
   years_of_experience: "11",
   highest_degree: "MBA, Operations management",

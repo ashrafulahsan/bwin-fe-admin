@@ -71,7 +71,7 @@ export default function LoginForm() {
   const onSubmit = async (values) => {
     try {
       const data = await loginMutation.mutateAsync({ role, ...values });
-      showSuccess(`Welcome back, ${data.user?.name || data.user?.email || "there"}!`);
+      showSuccess(`Welcome back, ${data.user?.full_name || data.user?.email || "there"}!`);
       router.push(ROUTES.DASHBOARD);
     } catch (error) {
       showError(error?.response?.data?.message || "Something went wrong. Please try again.");

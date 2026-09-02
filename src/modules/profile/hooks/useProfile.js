@@ -1,10 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSettingsStore } from "@/store/settingsStore";
+import { useCurrentUser } from "@/hooks/useApi";
+import { useToast } from "@/hooks/useToast";
 import { ADMIN_PROFILE, BASIC_FIELDS, PROFILE_GROUPS, PROFILE_ACTIVITIES } from "../constants/adminProfile.mock";
 
-const DEFAULT_AVATAR = "uploads/admin-profile.png";
+// Basic info has no mock fallback — it's either the real value from
+// GET /auth/me or blank. designation/department have no backend source at
+// all yet, so they stay blank everywhere (including the Professional detail
+// group, which shares these same keys).
+const BLANK_BASIC = {
+  first_name: "",
+  last_name: "",
+  email: "",
+  phone: "",
+  avatar_url: "",
+  bio: "",
+  language: "",
+  designation: "",
+  department: "",
+};
+
+const LANGUAGE_LABELS = { en: "English", bn: "বাংলা" };
 
 const FAMILIES = {
   navy: { light: ["var(--navy-100)", "var(--navy-700)"], dark: ["var(--navy-600)", "var(--navy-100)"] },
@@ -15,13 +33,41 @@ const FAMILIES = {
 
 export function useProfile() {
   const darkMode = useSettingsStore((state) => state.darkMode);
-  const [profileFields, setProfileFields] = useState({ ...ADMIN_PROFILE });
+  const { showError } = useToast();
+  // Basic info (name/email/phone/avatar/bio/language/role) comes from
+  // GET /auth/me; everything else in ADMIN_PROFILE (address, education, ...)
+  // stays mock — the backend has no profile table for it yet.
+  const { data: currentUser, isError: currentUserFailed } = useCurrentUser();
+  const [profileFields, setProfileFields] = useState({ ...ADMIN_PROFILE, ...BLANK_BASIC });
+  const [roleLabel, setRoleLabel] = useState("—");
   const [profileTab, setProfileTab] = useState("details");
   const [editBasic, setEditBasic] = useState(false);
   const [editDetails, setEditDetails] = useState(false);
   const [savedFlash, setSavedFlash] = useState(null);
   const [snapshot, setSnapshot] = useState(null);
   const [avatarFileName, setAvatarFileName] = useState(null);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    // Seeding the editable draft from the fetched record, once, when it
+    // arrives — not deriving render output, so the effect is warranted here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setProfileFields((prev) => ({
+      ...prev,
+      first_name: currentUser.first_name || "",
+      last_name: currentUser.last_name || "",
+      email: currentUser.email || "",
+      phone: currentUser.phone || "",
+      avatar_url: currentUser.avatar_url || "",
+      bio: currentUser.bio || "",
+      language: LANGUAGE_LABELS[currentUser.language] || currentUser.language || "",
+    }));
+    setRoleLabel(currentUser.roles?.[0]?.name || "—");
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUserFailed) showError("Couldn't load your profile from the server.");
+  }, [currentUserFailed, showError]);
 
   const fam = (name) => {
     const [bg, color] = FAMILIES[name][darkMode ? "dark" : "light"];
@@ -48,7 +94,7 @@ export function useProfile() {
     ...fam(r.tone),
   }));
 
-  const hasCustomAvatar = !!pf.avatar_url && pf.avatar_url !== DEFAULT_AVATAR;
+  const hasCustomAvatar = !!pf.avatar_url;
 
   const onAvatarFile = (file) => {
     if (!file) return;
@@ -59,7 +105,7 @@ export function useProfile() {
 
   const removeAvatar = () => {
     setAvatarFileName(null);
-    setProfileFields((prev) => ({ ...prev, avatar_url: DEFAULT_AVATAR }));
+    setProfileFields((prev) => ({ ...prev, avatar_url: "" }));
   };
 
   const startEditBasic = () => {
@@ -102,17 +148,16 @@ export function useProfile() {
   return {
     profile: {
       fullName: `${pf.first_name || ""} ${pf.last_name || ""}`.trim(),
-      designation: pf.designation,
-      department: pf.department,
+      subtitle: [pf.designation, pf.department].filter(Boolean).join(" · "),
       email: pf.email,
       phone: pf.phone,
       language: pf.language,
       bio: pf.bio,
     },
-    roleLabel: "Super admin",
+    roleLabel,
     basicFields,
     bioField: { value: pf.bio || "", onChange: setField("bio") },
-    avatarSrc: hasCustomAvatar ? pf.avatar_url : DEFAULT_AVATAR,
+    avatarSrc: pf.avatar_url || "",
     hasCustomAvatar,
     avatarHint: avatarFileName || "JPG or PNG, square, at least 400×400px",
     onAvatarFile,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
@@ -8,21 +8,42 @@ import { useAppStore } from "@/store/appStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useResponsiveSidebar } from "@/hooks";
 import { useAuthStore } from "@/store/authStore";
-import { TOKEN_STORAGE_KEY } from "@/constants/constants";
+import { useCurrentUser } from "@/hooks/useApi";
+import { TOKEN_STORAGE_KEY, isUsableToken } from "@/constants/constants";
 import { ROUTES } from "@/config/routes";
-
-const noopSubscribe = () => () => {};
-// Returning null keeps the server render and the client's pre-hydration render
-// identical (no mismatch); React re-syncs to the real localStorage value right
-// after hydration completes — no extra gating state, no manual setState-in-effect.
-const getServerSnapshot = () => null;
-const getClientTokenSnapshot = () => window.localStorage.getItem(TOKEN_STORAGE_KEY);
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const token = useSyncExternalStore(noopSubscribe, getClientTokenSnapshot, getServerSnapshot);
-  const isChecking = !token && !isAuthenticated;
+  const setUser = useAuthStore((state) => state.setUser);
+  const logout = useAuthStore((state) => state.logout);
+
+  // `checked`/`hasToken` both start false on the server and on the client's
+  // first paint (identical, so no hydration mismatch), and only flip once,
+  // together, in the effect below — after mount, client-only. Deliberately
+  // NOT derived via useSyncExternalStore: that resyncs to the real
+  // localStorage value synchronously around hydration, but nothing here
+  // needs to depend on exactly when relative to effects that happens, and a
+  // plain mounted-flag keeps the redirect effect's ordering unambiguous.
+  const [checked, setChecked] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
+
+  useEffect(() => {
+    const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
+    // Seeding client-only state once on mount, not deriving render output.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHasToken(isUsableToken(token));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setChecked(true);
+  }, []);
+
+  // The actual authority on "am I logged in": GET /auth/me. apiClient silently
+  // refreshes the access token on a 401 before this ever surfaces as an
+  // error, so a page refresh never logs someone out by itself — only a
+  // session the backend genuinely can't renew (expired refresh token, or
+  // revoked via logout) ends up here as an error.
+  const { data: currentUser, isSuccess, isError } = useCurrentUser(checked && hasToken);
+  const notAuthenticated = checked && (!hasToken || isError);
+  const sessionReady = checked && hasToken && isSuccess;
 
   useResponsiveSidebar();
 
@@ -31,13 +52,20 @@ export default function DashboardLayout({ children }) {
   const setSidebarCollapsed = useAppStore((state) => state.setSidebarCollapsed);
   const darkMode = useSettingsStore((state) => state.darkMode);
 
+  useEffect(() => {
+    if (isSuccess && currentUser) setUser(currentUser);
+  }, [isSuccess, currentUser, setUser]);
+
   // Redirect (client-only side effect, not state) once we know there's really no session.
   useEffect(() => {
-    if (isChecking) router.replace(ROUTES.LOGIN);
-  }, [isChecking, router]);
+    if (notAuthenticated) {
+      logout();
+      router.replace(ROUTES.LOGIN);
+    }
+  }, [notAuthenticated, logout, router]);
 
-  // Show loading/redirect placeholder until the client-side auth check settles
-  if (isChecking) {
+  // Show loading/redirect placeholder until the session is verified
+  if (!sessionReady) {
     return (
       <div
         style={{

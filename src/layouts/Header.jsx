@@ -32,7 +32,7 @@ export default function Header() {
   const darkMode = useSettingsStore((state) => state.darkMode);
   const toggleDarkMode = useSettingsStore((state) => state.toggleDarkMode);
 
-  const greetingName = useAuthStore((state) => state.user?.name ?? "Admin");
+  const greetingName = useAuthStore((state) => state.user?.full_name ?? "Admin");
   const logoutMutation = useLogout();
   const { showSuccess } = useToast();
 

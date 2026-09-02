@@ -1,5 +1,6 @@
 import axios from "axios";
-import { API_BASE_URL, TOKEN_STORAGE_KEY, REFRESH_TOKEN_STORAGE_KEY } from "@/constants/constants";
+import { API_BASE_URL, TOKEN_STORAGE_KEY, REFRESH_TOKEN_STORAGE_KEY, isUsableToken } from "@/constants/constants";
+import { useAuthStore } from "@/store/authStore";
 
 // Base HTTP client. Module-level services (e.g. modules/auth/services) should build on this
 // rather than calling axios/fetch directly.
@@ -15,7 +16,7 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
-    if (token) {
+    if (isUsableToken(token)) {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
@@ -39,15 +40,26 @@ apiClient.interceptors.response.use(
       try {
         if (typeof window !== "undefined") {
           const refreshToken = window.localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
-          if (refreshToken) {
+          if (isUsableToken(refreshToken)) {
             const response = await axios.post(
               `${API_BASE_URL || "http://127.0.0.1:8000/api/v1"}/auth/refresh`,
               { refresh_token: refreshToken }
             );
 
-            const newAccessToken = response.data.access_token;
-            window.localStorage.setItem(TOKEN_STORAGE_KEY, newAccessToken);
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            // Every response is wrapped in `{success, message, data}`, and
+            // refresh tokens are single-use/rotated — the backend revokes the
+            // whole session if a used one is replayed, so the new
+            // refresh_token must be persisted too, not just the access token.
+            // Validate before storing: writing a bad value here would look
+            // "logged in" (truthy) while silently failing every real request.
+            const tokens = response.data?.data;
+            if (!isUsableToken(tokens?.access_token) || !isUsableToken(tokens?.refresh_token)) {
+              throw new Error("Refresh response did not include usable tokens");
+            }
+            window.localStorage.setItem(TOKEN_STORAGE_KEY, tokens.access_token);
+            window.localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, tokens.refresh_token);
+            useAuthStore.getState().setAccessToken(tokens.access_token);
+            originalRequest.headers.Authorization = `Bearer ${tokens.access_token}`;
             return apiClient(originalRequest);
           }
         }

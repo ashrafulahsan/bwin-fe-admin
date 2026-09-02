@@ -138,16 +138,19 @@ export const useLogout = () => {
 };
 
 /**
- * Hook for fetching current user
+ * Hook for fetching the signed-in user from GET /auth/me — the authority on
+ * whether the current session is actually valid (a 401 here means the
+ * access token is dead and apiClient's silent refresh couldn't save it, not
+ * just that the client hasn't decided `isAuthenticated` yet).
+ * @param {boolean} enabled - Caller decides when it's worth asking, e.g. only
+ *   when a token exists at all.
  * @returns {Query}
  */
 export const useCurrentUser = (enabled = true) => {
-  const { isAuthenticated } = useAuthStore();
-
   return useQuery({
     queryKey: ["currentUser"],
     queryFn: () => authService.getCurrentUser(),
-    enabled: isAuthenticated && enabled,
+    enabled,
     staleTime: 5 * 60 * 1000,
   });
 };
