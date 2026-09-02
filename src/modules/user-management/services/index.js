@@ -5,6 +5,9 @@ import {
   getAllRolesRequest,
   getUserDetailsRequest,
   getUsersRequest,
+  replaceUserRolesRequest,
+  updateUserDetailsRequest,
+  updateUserRequest,
   updateUserStatusRequest,
 } from "../api";
 
@@ -56,4 +59,22 @@ export async function getUserDetails(userId) {
     if (error?.response?.status === 404) return null;
     throw error;
   }
+}
+
+// `UserRead` for the edited row.
+export async function updateUser(userId, payload) {
+  const response = await updateUserRequest(userId, payload);
+  return response.data?.data;
+}
+
+// `UserDetailsRead` for the row just updated.
+export async function updateUserDetails(userId, payload) {
+  const response = await updateUserDetailsRequest(userId, payload);
+  return response.data?.data;
+}
+
+// `UserRead` with its complete, replaced role set.
+export async function replaceUserRoles(userId, roleIds) {
+  const response = await replaceUserRolesRequest(userId, roleIds);
+  return response.data?.data;
 }

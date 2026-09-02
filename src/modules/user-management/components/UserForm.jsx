@@ -15,8 +15,20 @@ function resolveOptions(field) {
 }
 
 const [PRIMARY_GROUP, ...EXTRA_GROUPS] = USER_FORM_GROUPS;
+// Password is create-only here — changing an existing account's password
+// goes through its own endpoint (PUT /users/{id}/password), not this form.
+const EDIT_BASIC_FIELDS = PRIMARY_GROUP.fields.filter((f) => f.key !== "password_hash");
 
-export default function AddUserForm({
+const COPY = {
+  add: { heading: "New user", submitLabel: "Create user", savingLabel: "Creating…" },
+  edit: { heading: "Edit user", submitLabel: "Update user", savingLabel: "Updating…" },
+};
+
+// Shared by the "Add user" and "Edit user" views — same field groups
+// (constants/userFormFields.js), same layout; only the copy, the presence of
+// a password field, and what onSave does differ by `mode`.
+export default function UserForm({
+  mode = "add",
   form,
   onFieldChange,
   avatarHint,
@@ -31,6 +43,8 @@ export default function AddUserForm({
 }) {
   const fileInputRef = useRef(null);
   const fullName = [form.first_name, form.last_name].filter(Boolean).join(" ");
+  const copy = COPY[mode];
+  const basicFields = mode === "edit" ? EDIT_BASIC_FIELDS : PRIMARY_GROUP.fields;
 
   return (
     <div
@@ -45,10 +59,12 @@ export default function AddUserForm({
     >
       <div style={{ padding: "18px 24px", borderBottom: "1px solid var(--border)" }}>
         <div style={{ fontFamily: "var(--font-display)", fontWeight: "var(--fw-semibold)", fontSize: 18, color: "var(--text-primary)" }}>
-          New user
+          {copy.heading}
         </div>
         <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-muted)", marginTop: 2 }}>
-          An email or a phone number is required — everything else can be filled in later.
+          {mode === "edit"
+            ? "Update this account's information across users and user_details."
+            : "An email or a phone number is required — everything else can be filled in later."}
         </div>
       </div>
 
@@ -86,7 +102,7 @@ export default function AddUserForm({
           <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => onAvatarFile(e.target.files && e.target.files[0])} style={{ display: "none" }} />
         </fieldset>
 
-        <FieldGroup title={PRIMARY_GROUP.title} fields={PRIMARY_GROUP.fields} form={form} onFieldChange={onFieldChange} resolveOptions={resolveOptions} />
+        <FieldGroup title={PRIMARY_GROUP.title} fields={basicFields} form={form} onFieldChange={onFieldChange} resolveOptions={resolveOptions} />
 
         <fieldset style={{ margin: 0, border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "18px 20px 20px" }}>
           <legend style={{ padding: "0 8px", fontFamily: "var(--font-display)", fontWeight: "var(--fw-semibold)", fontSize: 14, color: "var(--text-primary)" }}>
@@ -120,7 +136,9 @@ export default function AddUserForm({
               );
             })}
           </div>
-          <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)", marginTop: 10 }}>Writes one row per role into user_roles.</div>
+          <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)", marginTop: 10 }}>
+            {mode === "edit" ? "Replaces this user's complete role set in user_roles." : "Writes one row per role into user_roles."}
+          </div>
         </fieldset>
 
         {EXTRA_GROUPS.map((group) => (
@@ -139,7 +157,7 @@ export default function AddUserForm({
           Cancel
         </Button>
         <Button variant="accent" onClick={onSave} disabled={saving}>
-          {saving ? "Creating…" : "Create user"}
+          {saving ? copy.savingLabel : copy.submitLabel}
         </Button>
       </div>
     </div>

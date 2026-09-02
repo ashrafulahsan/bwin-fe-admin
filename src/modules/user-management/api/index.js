@@ -24,6 +24,18 @@ export function updateUserStatusRequest(userId, status) {
   return apiClient.patch(`/users/${userId}`, { status });
 }
 
+export function updateUserRequest(userId, payload) {
+  return apiClient.patch(`/users/${userId}`, payload);
+}
+
+export function updateUserDetailsRequest(userId, payload) {
+  return apiClient.patch(`/users/${userId}/details`, payload);
+}
+
+export function replaceUserRolesRequest(userId, roleIds) {
+  return apiClient.put(`/users/${userId}/roles`, { role_ids: roleIds });
+}
+
 export function deleteUserRequest(userId) {
   return apiClient.delete(`/users/${userId}`);
 }

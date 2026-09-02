@@ -13,6 +13,9 @@ import {
   getAllRoles,
   getUserDetails,
   getUsers,
+  replaceUserRoles,
+  updateUser,
+  updateUserDetails,
   updateUserStatus,
 } from "../services";
 
@@ -93,19 +96,58 @@ function buildUserDetailsPayload(form) {
   return payload;
 }
 
-// List/filters/pagination, and the "Add user" form, are all real (GET
-// /users, GET /roles/all, POST /users, POST /users/{id}/details, PATCH
-// /users/{id}, DELETE /users/{id}). Creating a user is two sequential
-// requests: POST /users first (required fields only), then POST
-// /users/{id}/details only if at least one extended-details field was
-// filled in — see saveUser(). See UserDetailModal (view-only) and
-// UserTable's "Edit" action, which still just opens that same view — there
-// is no edit endpoint wired yet.
+// Same avatar_url omission as buildUserCreatePayload — no upload endpoint
+// exists to make the value real. A blank text field here is likewise
+// omitted rather than nulled, so clearing a field client-side without
+// meaning to doesn't blank it out server-side (same convention the profile
+// module's compact() helper uses).
+function buildUserUpdatePayload(form) {
+  return {
+    first_name: form.first_name.trim(),
+    last_name: form.last_name.trim() || undefined,
+    email: form.email.trim() || undefined,
+    phone: form.phone.trim() || undefined,
+    bio: form.bio.trim() || undefined,
+    language: form.language,
+    status: form.status,
+  };
+}
+
+function formFromUser(user) {
+  return {
+    ...EMPTY_USER_FORM,
+    first_name: user.first_name || "",
+    last_name: user.last_name || "",
+    email: user.email || "",
+    phone: user.phone || "",
+    avatar_url: user.avatar_url || "",
+    status: user.status,
+    language: user.language,
+    bio: user.bio || "",
+    role_ids: (user.roles || []).map((r) => r.id),
+  };
+}
+
+function formFromDetails(details) {
+  return Object.fromEntries(
+    DETAILS_FIELD_KEYS.map((key) => [key, details?.[key] != null ? String(details[key]) : ""])
+  );
+}
+
+// List/filters/pagination, and both the "Add user" and "Edit user" views,
+// are all real (GET /users, GET /roles/all, POST /users, GET/POST/PATCH
+// /users/{id}/details, PATCH /users/{id}, PUT /users/{id}/roles, DELETE
+// /users/{id}). Creating a user is two sequential requests: POST /users
+// first, then POST /users/{id}/details only if at least one extended-details
+// field was filled in — see saveUser(). Editing is up to three: PATCH
+// /users/{id}, PUT /users/{id}/roles (replaces the complete role set, so no
+// grant/revoke diffing is needed), and PATCH or POST /users/{id}/details
+// depending on whether a row already existed — see saveEdit().
 export function useUserManagement() {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
 
-  const [view, setView] = useState("list"); // "list" | "add"
+  const [view, setView] = useState("list"); // "list" | "add" | "edit"
   const [search, setSearchState] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilterState] = useState("all");
@@ -114,6 +156,7 @@ export function useUserManagement() {
   const [sortOrder, setSortOrderState] = useState(DEFAULT_SORT_ORDER);
   const [page, setPage] = useState(1);
   const [detailId, setDetailId] = useState(null);
+  const [editId, setEditId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [listNotice, setListNotice] = useState(null);
   const [formError, setFormError] = useState(null);
@@ -148,21 +191,34 @@ export function useUserManagement() {
 
   const { data: roles } = useQuery({ queryKey: ["roles", "all"], queryFn: getAllRoles });
 
-  // GET /users doesn't embed user_details — the view modal fetches it
-  // separately, only once a row is actually opened.
+  // GET /users doesn't embed user_details — the view modal and the edit form
+  // both fetch it separately, only once a row is actually opened. They share
+  // one query keyed on whichever user is active in either surface.
+  const activeDetailUserId = detailId || editId;
   const {
     data: detailData,
     isLoading: detailsLoading,
+    isSuccess: detailsLoaded,
     isError: detailsFailed,
   } = useQuery({
-    queryKey: ["users", "details", detailId],
-    queryFn: () => getUserDetails(detailId),
-    enabled: !!detailId,
+    queryKey: ["users", "details", activeDetailUserId],
+    queryFn: () => getUserDetails(activeDetailUserId),
+    enabled: !!activeDetailUserId,
   });
 
   useEffect(() => {
     if (detailsFailed) showError("Couldn't load this user's extended details.");
   }, [detailsFailed, showError]);
+
+  // Seeds the edit form's Personal/Address/Professional/Educational/Social/
+  // Emergency fields once user_details resolves — Basic + Roles are already
+  // filled in synchronously by openEditUser() from the row already in
+  // memory, so this only ever touches the second half of the form.
+  useEffect(() => {
+    if (view !== "edit" || !editId || !detailsLoaded) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm((f) => ({ ...f, ...formFromDetails(detailData) }));
+  }, [view, editId, detailsLoaded, detailData]);
 
   useEffect(() => {
     if (usersFailed) showError("Couldn't load users from the server.");
@@ -207,6 +263,36 @@ export function useUserManagement() {
     },
     onError: (error) => {
       const message = error?.response?.data?.message || "Couldn't create this user.";
+      setFormError(message);
+      showError(message);
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ userId, formValues, hadDetails }) => {
+      const user = await updateUser(userId, buildUserUpdatePayload(formValues));
+      await replaceUserRoles(userId, formValues.role_ids);
+      const detailsPayload = buildUserDetailsPayload(formValues);
+      if (hadDetails) {
+        await updateUserDetails(userId, detailsPayload);
+      } else if (Object.keys(detailsPayload).length > 0) {
+        await createUserDetails(userId, detailsPayload);
+      }
+      return user;
+    },
+    onSuccess: (user, { userId }) => {
+      queryClient.invalidateQueries({ queryKey: ["users", "list"] });
+      queryClient.invalidateQueries({ queryKey: ["users", "details", userId] });
+      setView("list");
+      setEditId(null);
+      setFormError(null);
+      setForm(EMPTY_USER_FORM);
+      setAvatarFileName(null);
+      setListNotice(`${user.full_name || user.first_name} was updated.`);
+      showSuccess("User updated.");
+    },
+    onError: (error) => {
+      const message = error?.response?.data?.message || "Couldn't update this user.";
       setFormError(message);
       showError(message);
     },
@@ -266,6 +352,7 @@ export function useUserManagement() {
   };
 
   const openAddUser = () => {
+    setEditId(null);
     setView("add");
     setFormError(null);
     setListNotice(null);
@@ -285,6 +372,39 @@ export function useUserManagement() {
     }
     setFormError(null);
     createUserMutation.mutate(form);
+  };
+
+  // Basic + Roles come from the row already held in the list query, so they
+  // appear instantly; Personal/Address/Professional/Educational/Social/
+  // Emergency fill in a moment later once GET /users/{id}/details resolves —
+  // see the seeding effect above.
+  const openEditUser = (id) => {
+    const user = users.find((u) => u.id === id);
+    if (!user) return;
+    setEditId(id);
+    setView("edit");
+    setFormError(null);
+    setListNotice(null);
+    setAvatarFileName(null);
+    setForm(formFromUser(user));
+  };
+  const cancelEdit = () => {
+    setView("list");
+    setEditId(null);
+    setFormError(null);
+    setForm(EMPTY_USER_FORM);
+    setAvatarFileName(null);
+  };
+
+  const saveEdit = () => {
+    if (!editId) return;
+    const error = validateUserForm(form, users, editId);
+    if (error) {
+      setFormError(error);
+      return;
+    }
+    setFormError(null);
+    updateUserMutation.mutate({ userId: editId, formValues: form, hadDetails: !!detailData });
   };
 
   const resetFilters = () => {
@@ -363,10 +483,14 @@ export function useUserManagement() {
     confirmDelete,
     deleting: deleteMutation.isPending,
 
-    // add-user view
+    // add/edit user views
     view,
     openAddUser,
     cancelAdd,
+    editId,
+    openEditUser,
+    cancelEdit,
+    editDetailsLoading: detailsLoading && !!editId && view === "edit",
     form,
     setFormField,
     avatarHint: avatarFileName || "JPG or PNG, square, at least 400×400px",
@@ -377,5 +501,7 @@ export function useUserManagement() {
     formError,
     saveUser,
     savingUser: createUserMutation.isPending,
+    saveEdit,
+    savingEdit: updateUserMutation.isPending,
   };
 }

@@ -9,7 +9,7 @@ import { useUserManagement } from "../hooks";
 import UserFiltersBar from "./UserFiltersBar";
 import UserTable from "./UserTable";
 import UserDetailModal from "./UserDetailModal";
-import AddUserForm from "./AddUserForm";
+import UserForm from "./UserForm";
 
 export default function UserManagementPage() {
   const isMobile = useAppStore((state) => state.isMobile);
@@ -17,6 +17,7 @@ export default function UserManagementPage() {
   const um = useUserManagement();
 
   const isListView = um.view === "list";
+  const isEditView = um.view === "edit";
   const deleteName = um.deleteTarget ? [um.deleteTarget.first_name, um.deleteTarget.last_name].filter(Boolean).join(" ") : "";
 
   return (
@@ -51,19 +52,27 @@ export default function UserManagementPage() {
       </div>
 
       {!isListView && (
-        <AddUserForm
-          form={um.form}
-          onFieldChange={um.setFormField}
-          avatarHint={um.avatarHint}
-          onAvatarFile={um.onAvatarFile}
-          removeAvatar={um.removeAvatar}
-          availableRoles={um.availableRoles}
-          onToggleRole={um.toggleFormRole}
-          formError={um.formError}
-          onCancel={um.cancelAdd}
-          onSave={um.saveUser}
-          saving={um.savingUser}
-        />
+        <>
+          {isEditView && um.editDetailsLoading && (
+            <div style={{ marginBottom: 12, fontSize: "var(--fs-body-sm)", color: "var(--text-muted)" }}>
+              Loading this user&apos;s existing details…
+            </div>
+          )}
+          <UserForm
+            mode={isEditView ? "edit" : "add"}
+            form={um.form}
+            onFieldChange={um.setFormField}
+            avatarHint={um.avatarHint}
+            onAvatarFile={um.onAvatarFile}
+            removeAvatar={um.removeAvatar}
+            availableRoles={um.availableRoles}
+            onToggleRole={um.toggleFormRole}
+            formError={um.formError}
+            onCancel={isEditView ? um.cancelEdit : um.cancelAdd}
+            onSave={isEditView ? um.saveEdit : um.saveUser}
+            saving={isEditView ? um.savingEdit : um.savingUser}
+          />
+        </>
       )}
 
       {isListView && (
@@ -123,7 +132,7 @@ export default function UserManagementPage() {
                 noResults={um.noResults}
                 darkMode={darkMode}
                 onView={um.openDetail}
-                onEdit={um.openDetail}
+                onEdit={um.openEditUser}
                 onToggleStatus={um.toggleStatus}
                 onDelete={um.requestDelete}
               />
