@@ -56,6 +56,11 @@ const DETAILS_FIELD_KEYS = [
 ];
 const DETAILS_NUMBER_KEYS = new Set(["years_of_experience", "graduation_year"]);
 
+// avatar_url is deliberately left out of this payload: there is no upload
+// endpoint yet (app/modules/media is an empty stub), so the value the "Add
+// user" form holds is only a local blob: preview for the admin's own screen
+// — sending it would write an unusable, tab-local reference into the row.
+// See onAvatarFile below (same approach the profile page's photo field uses).
 function buildUserCreatePayload(form) {
   return {
     first_name: form.first_name.trim(),
@@ -104,8 +109,8 @@ export function useUserManagement() {
   const [deleteId, setDeleteId] = useState(null);
   const [listNotice, setListNotice] = useState(null);
   const [formError, setFormError] = useState(null);
-  const [extrasOpen, setExtrasOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_USER_FORM);
+  const [avatarFileName, setAvatarFileName] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search.trim()), SEARCH_DEBOUNCE_MS);
@@ -172,7 +177,7 @@ export function useUserManagement() {
       setView("list");
       setFormError(null);
       setForm(EMPTY_USER_FORM);
-      setExtrasOpen(false);
+      setAvatarFileName(null);
       setListNotice(`${user.full_name || user.first_name} was created.`);
       showSuccess("User created.");
     },
@@ -226,6 +231,16 @@ export function useUserManagement() {
       role_ids: f.role_ids.includes(roleId) ? f.role_ids.filter((r) => r !== roleId) : f.role_ids.concat(roleId),
     }));
 
+  const onAvatarFile = (file) => {
+    if (!file) return;
+    setAvatarFileName(file.name);
+    setForm((f) => ({ ...f, avatar_url: URL.createObjectURL(file) }));
+  };
+  const removeAvatar = () => {
+    setAvatarFileName(null);
+    setForm((f) => ({ ...f, avatar_url: "" }));
+  };
+
   const openAddUser = () => {
     setView("add");
     setFormError(null);
@@ -235,7 +250,7 @@ export function useUserManagement() {
     setView("list");
     setFormError(null);
     setForm(EMPTY_USER_FORM);
-    setExtrasOpen(false);
+    setAvatarFileName(null);
   };
 
   const saveUser = () => {
@@ -328,10 +343,11 @@ export function useUserManagement() {
     cancelAdd,
     form,
     setFormField,
+    avatarHint: avatarFileName || "JPG or PNG, square, at least 400×400px",
+    onAvatarFile,
+    removeAvatar,
     availableRoles: roles || [],
     toggleFormRole,
-    extrasOpen,
-    toggleExtras: () => setExtrasOpen((o) => !o),
     formError,
     saveUser,
     savingUser: createUserMutation.isPending,

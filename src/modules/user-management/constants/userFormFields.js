@@ -8,6 +8,7 @@ export const EMPTY_USER_FORM = {
   last_name: "",
   email: "",
   phone: "",
+  avatar_url: "",
   password_hash: "",
   status: "pending",
   language: "en",

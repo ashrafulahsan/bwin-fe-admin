@@ -54,10 +54,11 @@ export default function UserManagementPage() {
         <AddUserForm
           form={um.form}
           onFieldChange={um.setFormField}
+          avatarHint={um.avatarHint}
+          onAvatarFile={um.onAvatarFile}
+          removeAvatar={um.removeAvatar}
           availableRoles={um.availableRoles}
           onToggleRole={um.toggleFormRole}
-          extrasOpen={um.extrasOpen}
-          onToggleExtras={um.toggleExtras}
           formError={um.formError}
           onCancel={um.cancelAdd}
           onSave={um.saveUser}

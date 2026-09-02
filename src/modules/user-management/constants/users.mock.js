@@ -6,6 +6,8 @@
 // "inactive", which was never a real backend value.
 export const USER_STATUSES = ["pending", "active", "suspended", "deactivated"];
 export const USER_STATUS_TONES = { pending: "warning", active: "success", suspended: "error", deactivated: "neutral" };
-export const LANGUAGES = { en: "English", bn: "Bangla", es: "Spanish" };
+// Matches the backend's Language enum exactly (app/core/constants.py) — it
+// only defines "en" and "bn"; anything else 422s on save.
+export const LANGUAGES = { en: "English", bn: "Bangla" };
 
 export const fullName = (u) => [u.first_name, u.last_name].filter(Boolean).join(" ");
