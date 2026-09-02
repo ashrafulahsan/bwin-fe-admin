@@ -15,3 +15,7 @@ export function updateMyProfileRequest(payload) {
 export function getMyActivityRequest(params) {
   return apiClient.get("/my-activity-logs", { params });
 }
+
+export function changePasswordRequest(payload) {
+  return apiClient.post("/auth/change-password", payload);
+}

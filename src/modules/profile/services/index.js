@@ -1,4 +1,5 @@
 import {
+  changePasswordRequest,
   getMyActivityRequest,
   getMyDetailsRequest,
   updateMyDetailsRequest,
@@ -28,4 +29,12 @@ export async function updateMyProfile(payload) {
 export async function getMyActivity(params) {
   const response = await getMyActivityRequest(params);
   return response.data?.data ?? { items: [], meta: null };
+}
+
+// `{sessions_ended, tokens}` — `tokens` is null when other sessions were
+// left alone (nothing needed replacing); otherwise it's the replacement
+// pair, since the change retires every token the account held.
+export async function changePassword(payload) {
+  const response = await changePasswordRequest(payload);
+  return response.data?.data;
 }
