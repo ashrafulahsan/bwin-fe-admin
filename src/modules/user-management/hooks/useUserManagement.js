@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/useToast";
 import { USER_STATUSES } from "../constants/users.mock";
 import { EMPTY_USER_FORM } from "../constants/userFormFields";
 import { validateUserForm } from "../validation/validateUserForm";
-import { deleteUser, getAllRoles, getUsers, updateUserStatus } from "../services";
+import { createUser, createUserDetails, deleteUser, getAllRoles, getUsers, updateUserStatus } from "../services";
 
 const PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 350;
@@ -27,13 +27,67 @@ const DEFAULT_SORT_ORDER = "desc";
 const capitalize = (v) => v.charAt(0).toUpperCase() + v.slice(1);
 const roleNamesOf = (u) => (u.roles || []).map((r) => r.name);
 
-// List/filters/pagination are real (GET /users, GET /roles/all, PATCH
-// /users/{id}, DELETE /users/{id}). The "Add user" form below is not: there
-// is no role_id-aware create flow wired up yet, so saveUser() stays exactly
-// what it always was — local validation plus a success notice, nothing
-// persisted. See UserDetailModal (view-only) and UserTable's "Edit" action,
-// which still just opens that same view — there is no edit endpoint wired
-// either.
+// user_details fields the "New user" form can collect. year fields arrive
+// as strings from the number inputs and need coercing; everything else goes
+// through as-is. Blank values are dropped rather than sent as "" — the
+// backend columns are nullable and an empty string is not a meaningful value
+// for a date, a URL, or a year.
+const DETAILS_FIELD_KEYS = [
+  "gender",
+  "date_of_birth",
+  "nationality",
+  "address",
+  "city",
+  "country",
+  "designation",
+  "department",
+  "organization",
+  "years_of_experience",
+  "highest_degree",
+  "university",
+  "graduation_year",
+  "linkedin_url",
+  "youtube_url",
+  "facebook_url",
+  "website_url",
+  "emergency_contact_name",
+  "emergency_contact_phone",
+  "notes",
+];
+const DETAILS_NUMBER_KEYS = new Set(["years_of_experience", "graduation_year"]);
+
+function buildUserCreatePayload(form) {
+  return {
+    first_name: form.first_name.trim(),
+    last_name: form.last_name.trim() || undefined,
+    email: form.email.trim() || undefined,
+    phone: form.phone.trim() || undefined,
+    password: form.password_hash.trim() || undefined,
+    bio: form.bio.trim() || undefined,
+    language: form.language,
+    status: form.status,
+    role_ids: form.role_ids,
+  };
+}
+
+function buildUserDetailsPayload(form) {
+  const payload = {};
+  for (const key of DETAILS_FIELD_KEYS) {
+    const raw = form[key];
+    if (raw === "" || raw === null || raw === undefined) continue;
+    payload[key] = DETAILS_NUMBER_KEYS.has(key) ? Number(raw) : raw;
+  }
+  return payload;
+}
+
+// List/filters/pagination, and the "Add user" form, are all real (GET
+// /users, GET /roles/all, POST /users, POST /users/{id}/details, PATCH
+// /users/{id}, DELETE /users/{id}). Creating a user is two sequential
+// requests: POST /users first (required fields only), then POST
+// /users/{id}/details only if at least one extended-details field was
+// filled in — see saveUser(). See UserDetailModal (view-only) and
+// UserTable's "Edit" action, which still just opens that same view — there
+// is no edit endpoint wired yet.
 export function useUserManagement() {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
@@ -104,6 +158,31 @@ export function useUserManagement() {
     onSettled: () => setDeleteId(null),
   });
 
+  const createUserMutation = useMutation({
+    mutationFn: async (formValues) => {
+      const user = await createUser(buildUserCreatePayload(formValues));
+      const detailsPayload = buildUserDetailsPayload(formValues);
+      if (Object.keys(detailsPayload).length > 0) {
+        await createUserDetails(user.id, detailsPayload);
+      }
+      return user;
+    },
+    onSuccess: (user) => {
+      queryClient.invalidateQueries({ queryKey: ["users", "list"] });
+      setView("list");
+      setFormError(null);
+      setForm(EMPTY_USER_FORM);
+      setExtrasOpen(false);
+      setListNotice(`${user.full_name || user.first_name} was created.`);
+      showSuccess("User created.");
+    },
+    onError: (error) => {
+      const message = error?.response?.data?.message || "Couldn't create this user.";
+      setFormError(message);
+      showError(message);
+    },
+  });
+
   const users = usersPage?.items || [];
   const meta = usersPage?.meta || null;
 
@@ -141,8 +220,11 @@ export function useUserManagement() {
   };
 
   const setFormField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
-  const toggleFormRole = (name) =>
-    setForm((f) => ({ ...f, roles: f.roles.includes(name) ? f.roles.filter((r) => r !== name) : f.roles.concat(name) }));
+  const toggleFormRole = (roleId) =>
+    setForm((f) => ({
+      ...f,
+      role_ids: f.role_ids.includes(roleId) ? f.role_ids.filter((r) => r !== roleId) : f.role_ids.concat(roleId),
+    }));
 
   const openAddUser = () => {
     setView("add");
@@ -156,21 +238,14 @@ export function useUserManagement() {
     setExtrasOpen(false);
   };
 
-  // Local-only: see the module doc comment above. Validates and gives the
-  // same confirmation the mock version always did, but nothing is sent to
-  // the server — there is no real create-user flow wired up yet.
   const saveUser = () => {
     const error = validateUserForm(form, users);
     if (error) {
       setFormError(error);
       return;
     }
-    const name = [form.first_name.trim(), form.last_name.trim()].filter(Boolean).join(" ");
-    setView("list");
     setFormError(null);
-    setForm(EMPTY_USER_FORM);
-    setExtrasOpen(false);
-    setListNotice(`${name} was validated, but user creation isn't connected to the server yet — nothing was saved.`);
+    createUserMutation.mutate(form);
   };
 
   const resetFilters = () => {
@@ -253,10 +328,12 @@ export function useUserManagement() {
     cancelAdd,
     form,
     setFormField,
+    availableRoles: roles || [],
     toggleFormRole,
     extrasOpen,
     toggleExtras: () => setExtrasOpen((o) => !o),
     formError,
     saveUser,
+    savingUser: createUserMutation.isPending,
   };
 }

@@ -8,6 +8,14 @@ export function getAllRolesRequest() {
   return apiClient.get("/roles/all");
 }
 
+export function createUserRequest(payload) {
+  return apiClient.post("/users", payload);
+}
+
+export function createUserDetailsRequest(userId, payload) {
+  return apiClient.post(`/users/${userId}/details`, payload);
+}
+
 export function updateUserStatusRequest(userId, status) {
   return apiClient.patch(`/users/${userId}`, { status });
 }

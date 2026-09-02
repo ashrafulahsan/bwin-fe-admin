@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui";
 import FieldGroup from "./FieldGroup";
 import { USER_FORM_GROUPS } from "../constants/userFormFields";
-import { USER_STATUSES, LANGUAGES, ROLE_CHOICES } from "../constants/users.mock";
+import { USER_STATUSES, LANGUAGES } from "../constants/users.mock";
 
 const capitalize = (v) => v.charAt(0).toUpperCase() + v.slice(1);
 
@@ -15,7 +15,18 @@ function resolveOptions(field) {
 
 const [PRIMARY_GROUP, ...EXTRA_GROUPS] = USER_FORM_GROUPS;
 
-export default function AddUserForm({ form, onFieldChange, roles, onToggleRole, extrasOpen, onToggleExtras, formError, onCancel, onSave }) {
+export default function AddUserForm({
+  form,
+  onFieldChange,
+  availableRoles,
+  onToggleRole,
+  extrasOpen,
+  onToggleExtras,
+  formError,
+  onCancel,
+  onSave,
+  saving,
+}) {
   const extrasFilled = EXTRA_GROUPS.reduce(
     (n, g) => n + g.fields.filter((f) => String(form[f.key] || "").trim()).length,
     0
@@ -49,11 +60,11 @@ export default function AddUserForm({ form, onFieldChange, roles, onToggleRole, 
             Roles
           </legend>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            {ROLE_CHOICES.map((name) => {
-              const checked = roles.includes(name);
+            {(availableRoles || []).map((role) => {
+              const checked = form.role_ids.includes(role.id);
               return (
                 <label
-                  key={name}
+                  key={role.id}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -68,10 +79,10 @@ export default function AddUserForm({ form, onFieldChange, roles, onToggleRole, 
                   <input
                     type="checkbox"
                     checked={checked}
-                    onChange={() => onToggleRole(name)}
+                    onChange={() => onToggleRole(role.id)}
                     style={{ width: 16, height: 16, accentColor: "var(--orange-500)", cursor: "pointer" }}
                   />
-                  <span style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-primary)" }}>{name}</span>
+                  <span style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-primary)" }}>{role.name}</span>
                 </label>
               );
             })}
@@ -124,11 +135,11 @@ export default function AddUserForm({ form, onFieldChange, roles, onToggleRole, 
       )}
 
       <div style={{ padding: "20px 24px", display: "flex", gap: 10, justifyContent: "flex-end" }}>
-        <Button variant="secondary" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>
-        <Button variant="accent" onClick={onSave}>
-          Create user
+        <Button variant="accent" onClick={onSave} disabled={saving}>
+          {saving ? "Creating…" : "Create user"}
         </Button>
       </div>
     </div>

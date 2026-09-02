@@ -32,7 +32,7 @@ export const EMPTY_USER_FORM = {
   emergency_contact_name: "",
   emergency_contact_phone: "",
   notes: "",
-  roles: [],
+  role_ids: [],
 };
 
 const GENDER_OPTIONS = [
@@ -45,7 +45,7 @@ const GENDER_OPTIONS = [
 // kind: "text" | "select" | "textarea". optionsFrom: "statuses" | "languages" | null (static options).
 export const USER_FORM_GROUPS = [
   {
-    title: "Account (users)",
+    title: "Basic (users)",
     fields: [
       { key: "first_name", label: "First name", kind: "text", placeholder: "Required" },
       { key: "last_name", label: "Last name", kind: "text" },

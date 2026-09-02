@@ -1,4 +1,6 @@
 import {
+  createUserDetailsRequest,
+  createUserRequest,
   deleteUserRequest,
   getAllRolesRequest,
   getUsersRequest,
@@ -28,4 +30,16 @@ export async function updateUserStatus({ userId, status }) {
 export async function deleteUser(userId) {
   await deleteUserRequest(userId);
   return userId;
+}
+
+// `UserRead` for the newly created row.
+export async function createUser(payload) {
+  const response = await createUserRequest(payload);
+  return response.data?.data;
+}
+
+// `UserDetailsRead` for the row just attached to that user.
+export async function createUserDetails(userId, payload) {
+  const response = await createUserDetailsRequest(userId, payload);
+  return response.data?.data;
 }

@@ -14,6 +14,6 @@ export function validateUserForm(form, existingUsers) {
   if (email && !EMAIL_PATTERN.test(email)) return "That email address looks invalid.";
   if (email && existingUsers.some((u) => u.email === email)) return "A user with that email already exists.";
   if (form.password_hash && form.password_hash.length < 8) return "Password must be at least 8 characters.";
-  if (!form.roles.length) return "Assign at least one role.";
+  if (!form.role_ids.length) return "Assign at least one role.";
   return null;
 }
