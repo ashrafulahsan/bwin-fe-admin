@@ -2,7 +2,7 @@
 
 import { Button, Input } from "@/components/ui";
 
-export default function ProfileDetailsTab({ detailGroups, editDetails, savedDetails, startEditDetails, saveDetails, cancelDetails }) {
+export default function ProfileDetailsTab({ detailGroups, editDetails, savingDetails, savedDetails, startEditDetails, saveDetails, cancelDetails }) {
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 24 }}>
       {detailGroups.map((group) => (
@@ -17,7 +17,7 @@ export default function ProfileDetailsTab({ detailGroups, editDetails, savedDeta
                     {field.value}
                   </div>
                 )}
-                {editDetails && <Input value={field.editValue} onChange={field.onChange} />}
+                {editDetails && <Input type={field.inputType} value={field.editValue} onChange={field.onChange} />}
               </div>
             ))}
           </div>
@@ -41,8 +41,8 @@ export default function ProfileDetailsTab({ detailGroups, editDetails, savedDeta
             <Button variant="secondary" onClick={cancelDetails}>
               Cancel
             </Button>
-            <Button variant="accent" onClick={saveDetails}>
-              Save information
+            <Button variant="accent" onClick={saveDetails} disabled={savingDetails}>
+              {savingDetails ? "Saving…" : "Save information"}
             </Button>
           </>
         )}

@@ -26,6 +26,7 @@ export default function ProfilePage() {
         onAvatarFile={p.onAvatarFile}
         removeAvatar={p.removeAvatar}
         editBasic={p.editBasic}
+        savingBasic={p.savingBasic}
         savedBasic={p.savedBasic}
         startEditBasic={p.startEditBasic}
         saveBasic={p.saveBasic}
@@ -61,6 +62,7 @@ export default function ProfilePage() {
           <ProfileDetailsTab
             detailGroups={p.detailGroups}
             editDetails={p.editDetails}
+            savingDetails={p.savingDetails}
             savedDetails={p.savedDetails}
             startEditDetails={p.startEditDetails}
             saveDetails={p.saveDetails}

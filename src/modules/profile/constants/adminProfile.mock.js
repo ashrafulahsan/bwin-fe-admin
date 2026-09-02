@@ -1,29 +1,12 @@
-// public.admin_profiles doesn't exist yet — these fields have no backend
-// source, so they stay mock for the Details tab only. Basic info (name,
-// email, phone, avatar, bio, language) comes from GET /auth/me, and
-// designation/department have no backend source at all — both come out
-// blank instead of mock; see BLANK_BASIC in ../hooks/useProfile.js, which is
-// why those keys are not listed here.
-export const ADMIN_PROFILE = {
-  gender: "Female",
-  date_of_birth: "1989-03-11",
-  nationality: "Bangladeshi",
-  photo_id: "BD-PP-4820193",
-  street_address: "House 42, Road 11, Banani",
-  city: "Dhaka",
-  country: "Bangladesh",
-  organization: "BWIN Consultants",
-  years_of_experience: "11",
-  highest_degree: "MBA, Operations management",
-  university: "University of Dhaka",
-  graduation_year: "2013",
-  linkedin_url: "linkedin.com/in/amaraokafor",
-  youtube_url: "youtube.com/@bwinconsultants",
-  facebook_url: "facebook.com/bwinconsultants",
-  website_url: "bwinconsultants.com",
-  emergency_contact_name: "Tunde Okafor",
-  emergency_contact_phone: "+8801711002244",
-};
+// Every field below now has a real backend source: basic info from
+// GET/PATCH /auth/me, everything else from GET/PATCH /auth/my-details (the
+// user_details table). See BLANK_BASIC and BLANK_DETAILS in
+// ../hooks/useProfile.js for the "no data yet" defaults — nothing here is
+// mock data any more.
+//
+// `photo_id` (a media reference, not a plain ID number) is left out of the
+// editable groups below: there is no file-upload endpoint yet to produce a
+// value for it.
 
 export const BASIC_FIELDS = [
   { key: "first_name", label: "First name" },
@@ -38,15 +21,14 @@ export const PROFILE_GROUPS = [
     title: "Personal",
     fields: [
       ["gender", "Gender"],
-      ["date_of_birth", "Date of birth"],
+      ["date_of_birth", "Date of birth", "date"],
       ["nationality", "Nationality"],
-      ["photo_id", "NID / Passport / Birth (photo ID)"],
     ],
   },
   {
     title: "Address",
     fields: [
-      ["street_address", "Street address"],
+      ["address", "Street address"],
       ["city", "City"],
       ["country", "Country"],
     ],
@@ -57,7 +39,7 @@ export const PROFILE_GROUPS = [
       ["designation", "Designation"],
       ["department", "Department"],
       ["organization", "Organization"],
-      ["years_of_experience", "Years of experience"],
+      ["years_of_experience", "Years of experience", "number"],
     ],
   },
   {
@@ -65,7 +47,7 @@ export const PROFILE_GROUPS = [
     fields: [
       ["highest_degree", "Highest degree"],
       ["university", "University"],
-      ["graduation_year", "Graduation year"],
+      ["graduation_year", "Graduation year", "number"],
     ],
   },
   {

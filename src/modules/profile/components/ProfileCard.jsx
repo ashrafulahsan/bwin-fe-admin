@@ -14,6 +14,7 @@ export default function ProfileCard({
   onAvatarFile,
   removeAvatar,
   editBasic,
+  savingBasic,
   savedBasic,
   startEditBasic,
   saveBasic,
@@ -116,8 +117,8 @@ export default function ProfileCard({
           </div>
 
           <div style={{ display: "flex", gap: 10 }}>
-            <Button variant="accent" onClick={saveBasic}>
-              Save changes
+            <Button variant="accent" onClick={saveBasic} disabled={savingBasic}>
+              {savingBasic ? "Saving…" : "Save changes"}
             </Button>
             <Button variant="secondary" onClick={cancelBasic}>
               Cancel
