@@ -1,63 +1,143 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { USERS, USER_STATUSES } from "../constants/users.mock";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/useToast";
+import { USER_STATUSES } from "../constants/users.mock";
 import { EMPTY_USER_FORM } from "../constants/userFormFields";
 import { validateUserForm } from "../validation/validateUserForm";
+import { deleteUser, getAllRoles, getUsers, updateUserStatus } from "../services";
+
+const PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 350;
+
+// sort_by is validated against real User model columns server-side (an
+// unknown one errors, it doesn't just get ignored) — offering a fixed list
+// of known-good columns rather than free text keeps this from ever 400ing.
+const SORT_FIELDS = [
+  { value: "created_at", label: "Date created" },
+  { value: "first_name", label: "First name" },
+  { value: "email", label: "Email" },
+  { value: "last_login_at", label: "Last login" },
+  { value: "status", label: "Status" },
+];
+const DEFAULT_SORT_BY = "created_at";
+const DEFAULT_SORT_ORDER = "desc";
 
 const capitalize = (v) => v.charAt(0).toUpperCase() + v.slice(1);
 const roleNamesOf = (u) => (u.roles || []).map((r) => r.name);
 
-// Mirrors the state machine in the Claude Design source (admin-panel-user-management.dc.html)
-// one-to-one: list/filter state, the "New user" form, and the detail modal. Backed by
-// in-memory mock data (constants/users.mock.js) — swap the setUsers mutations for
-// modules/user-management/services once the users API exists.
+// List/filters/pagination are real (GET /users, GET /roles/all, PATCH
+// /users/{id}, DELETE /users/{id}). The "Add user" form below is not: there
+// is no role_id-aware create flow wired up yet, so saveUser() stays exactly
+// what it always was — local validation plus a success notice, nothing
+// persisted. See UserDetailModal (view-only) and UserTable's "Edit" action,
+// which still just opens that same view — there is no edit endpoint wired
+// either.
 export function useUserManagement() {
-  const [users, setUsers] = useState(USERS);
+  const queryClient = useQueryClient();
+  const { showSuccess, showError } = useToast();
+
   const [view, setView] = useState("list"); // "list" | "add"
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [verifiedFilter, setVerifiedFilter] = useState("all");
-  const [loginFilter, setLoginFilter] = useState("all");
-  const [showDeleted, setShowDeleted] = useState(false);
+  const [search, setSearchState] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [roleFilter, setRoleFilterState] = useState("all");
+  const [statusFilter, setStatusFilterState] = useState("all");
+  const [sortBy, setSortByState] = useState(DEFAULT_SORT_BY);
+  const [sortOrder, setSortOrderState] = useState(DEFAULT_SORT_ORDER);
+  const [page, setPage] = useState(1);
   const [detailId, setDetailId] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
   const [listNotice, setListNotice] = useState(null);
   const [formError, setFormError] = useState(null);
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_USER_FORM);
 
-  const roleSet = useMemo(() => [...new Set(users.flatMap(roleNamesOf))], [users]);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return users.filter((u) => {
-      if (!showDeleted && u.deleted_at) return false;
-      if (showDeleted && !u.deleted_at) return false;
-      if (roleFilter !== "all" && !roleNamesOf(u).includes(roleFilter)) return false;
-      if (statusFilter !== "all" && u.status !== statusFilter) return false;
-      if (verifiedFilter === "verified" && !u.email_verified_at) return false;
-      if (verifiedFilter === "unverified" && u.email_verified_at) return false;
-      if (loginFilter === "social" && !u.is_social_login) return false;
-      if (loginFilter === "password" && u.is_social_login) return false;
-      if (q) {
-        const hay = `${u.first_name} ${u.last_name} ${u.email || ""} ${u.phone || ""} ${roleNamesOf(u).join(" ")}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [users, search, roleFilter, statusFilter, verifiedFilter, loginFilter, showDeleted]);
-
-  const toggleStatus = (id) => {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status: u.status === "active" ? "suspended" : "active" } : u)));
+  const queryParams = {
+    page,
+    page_size: PAGE_SIZE,
+    search: debouncedSearch || undefined,
+    role: roleFilter !== "all" ? roleFilter : undefined,
+    status: statusFilter !== "all" ? statusFilter : undefined,
+    sort_by: sortBy,
+    sort_order: sortOrder,
   };
 
-  const toggleDeletedFor = (id) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === id ? { ...u, deleted_at: u.deleted_at ? null : new Date().toISOString().slice(0, 19).replace("T", " ") } : u
-      )
-    );
+  const {
+    data: usersPage,
+    isLoading,
+    isFetching,
+    isError: usersFailed,
+  } = useQuery({
+    queryKey: ["users", "list", queryParams],
+    queryFn: () => getUsers(queryParams),
+    placeholderData: (prev) => prev,
+  });
+
+  const { data: roles } = useQuery({ queryKey: ["roles", "all"], queryFn: getAllRoles });
+
+  useEffect(() => {
+    if (usersFailed) showError("Couldn't load users from the server.");
+  }, [usersFailed, showError]);
+
+  const statusMutation = useMutation({
+    mutationFn: updateUserStatus,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users", "list"] });
+      showSuccess("Status updated.");
+    },
+    onError: () => showError("Couldn't update this user's status."),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users", "list"] });
+      showSuccess("User deleted.");
+    },
+    onError: () => showError("Couldn't delete this user."),
+    onSettled: () => setDeleteId(null),
+  });
+
+  const users = usersPage?.items || [];
+  const meta = usersPage?.meta || null;
+
+  const setSearch = (value) => {
+    setSearchState(value);
+    setPage(1);
+  };
+  const setRoleFilter = (value) => {
+    setRoleFilterState(value);
+    setPage(1);
+  };
+  const setStatusFilter = (value) => {
+    setStatusFilterState(value);
+    setPage(1);
+  };
+  const setSortBy = (value) => {
+    setSortByState(value);
+    setPage(1);
+  };
+  const setSortOrder = (value) => {
+    setSortOrderState(value);
+    setPage(1);
+  };
+
+  const toggleStatus = (id) => {
+    const user = users.find((u) => u.id === id);
+    if (!user) return;
+    statusMutation.mutate({ userId: id, status: user.status === "active" ? "suspended" : "active" });
+  };
+
+  const requestDelete = (id) => setDeleteId(id);
+  const cancelDelete = () => setDeleteId(null);
+  const confirmDelete = () => {
+    if (deleteId) deleteMutation.mutate(deleteId);
   };
 
   const setFormField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
@@ -76,100 +156,63 @@ export function useUserManagement() {
     setExtrasOpen(false);
   };
 
+  // Local-only: see the module doc comment above. Validates and gives the
+  // same confirmation the mock version always did, but nothing is sent to
+  // the server — there is no real create-user flow wired up yet.
   const saveUser = () => {
     const error = validateUserForm(form, users);
     if (error) {
       setFormError(error);
       return;
     }
-    const today = new Date().toISOString().slice(0, 10);
-    const newUser = {
-      id: `new-${users.length + 1}-${today}`,
-      email: form.email.trim() || null,
-      phone: form.phone.trim() || null,
-      first_name: form.first_name.trim(),
-      last_name: form.last_name.trim() || null,
-      avatar_url: null,
-      status: form.status,
-      language: form.language,
-      email_verified_at: null,
-      phone_verified_at: null,
-      last_login_at: null,
-      created_at: today,
-      deleted_at: null,
-      is_social_login: false,
-      social_provider: null,
-      roles: form.roles.map((name) => ({ name, slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"), level: 0 })),
-      details: {
-        gender: form.gender,
-        date_of_birth: form.date_of_birth,
-        nationality: form.nationality,
-        address: form.address,
-        city: form.city,
-        country: form.country,
-        designation: form.designation,
-        department: form.department,
-        organization: form.organization,
-        years_of_experience: form.years_of_experience,
-        highest_degree: form.highest_degree,
-        university: form.university,
-        graduation_year: form.graduation_year,
-        linkedin_url: form.linkedin_url,
-        youtube_url: form.youtube_url,
-        facebook_url: form.facebook_url,
-        website_url: form.website_url,
-        emergency_contact_name: form.emergency_contact_name,
-        emergency_contact_phone: form.emergency_contact_phone,
-        notes: form.notes,
-      },
-    };
-    setUsers((prev) => prev.concat(newUser));
+    const name = [form.first_name.trim(), form.last_name.trim()].filter(Boolean).join(" ");
     setView("list");
     setFormError(null);
-    setSearch("");
     setForm(EMPTY_USER_FORM);
     setExtrasOpen(false);
-    setListNotice(
-      `${[newUser.first_name, newUser.last_name].filter(Boolean).join(" ")} was created — 1 users row, 1 user_details row, ${
-        form.roles.length
-      } user_roles row${form.roles.length === 1 ? "" : "s"}.`
-    );
+    setListNotice(`${name} was validated, but user creation isn't connected to the server yet — nothing was saved.`);
   };
 
   const resetFilters = () => {
-    setSearch("");
-    setRoleFilter("all");
-    setStatusFilter("all");
-    setVerifiedFilter("all");
-    setLoginFilter("all");
+    setSearchState("");
+    setDebouncedSearch("");
+    setRoleFilterState("all");
+    setStatusFilterState("all");
+    setSortByState(DEFAULT_SORT_BY);
+    setSortOrderState(DEFAULT_SORT_ORDER);
+    setPage(1);
   };
 
   const statusOptions = [{ value: "all", label: "All statuses" }].concat(
     USER_STATUSES.map((v) => ({ value: v, label: capitalize(v) }))
   );
-  const roleOptions = [{ value: "all", label: "All roles" }].concat(roleSet.map((r) => ({ value: r, label: r })));
-  const verifiedOptions = [
-    { value: "all", label: "Any verification" },
-    { value: "verified", label: "Email verified" },
-    { value: "unverified", label: "Not verified" },
-  ];
-  const loginOptions = [
-    { value: "all", label: "Any login type" },
-    { value: "password", label: "Password" },
-    { value: "social", label: "Social" },
+  const roleOptions = [{ value: "all", label: "All roles" }].concat(
+    (roles || []).map((r) => ({ value: r.slug, label: r.name }))
+  );
+  const sortByOptions = SORT_FIELDS;
+  const sortOrderOptions = [
+    { value: "desc", label: "Descending" },
+    { value: "asc", label: "Ascending" },
   ];
 
   const current = users.find((u) => u.id === detailId) || null;
+  const deleting = users.find((u) => u.id === deleteId) || null;
 
   return {
     // list
-    filtered,
-    totalCount: users.length,
-    noResults: users.length > 0 && filtered.length === 0,
+    rows: users,
+    meta,
+    loading: isLoading,
+    fetching: isFetching,
+    noResults: !isLoading && users.length === 0,
     roleNamesOf,
     toggleStatus,
-    toggleDeletedFor,
     openDetail: setDetailId,
+
+    // pagination
+    page,
+    onPrevPage: () => setPage((p) => Math.max(1, p - 1)),
+    onNextPage: () => setPage((p) => (meta?.has_next ? p + 1 : p)),
 
     // filters
     search,
@@ -178,17 +221,15 @@ export function useUserManagement() {
     setRoleFilter,
     statusFilter,
     setStatusFilter,
-    verifiedFilter,
-    setVerifiedFilter,
-    loginFilter,
-    setLoginFilter,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
     statusOptions,
     roleOptions,
-    verifiedOptions,
-    loginOptions,
+    sortByOptions,
+    sortOrderOptions,
     resetFilters,
-    showDeleted,
-    toggleShowDeleted: () => setShowDeleted((v) => !v),
 
     // list notice
     listNotice,
@@ -197,6 +238,14 @@ export function useUserManagement() {
     // detail modal
     current,
     closeDetail: () => setDetailId(null),
+
+    // delete confirm
+    deleteOpen: !!deleteId,
+    deleteTarget: deleting,
+    requestDelete,
+    cancelDelete,
+    confirmDelete,
+    deleting: deleteMutation.isPending,
 
     // add-user view
     view,

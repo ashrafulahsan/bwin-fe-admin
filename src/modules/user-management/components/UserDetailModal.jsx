@@ -15,13 +15,12 @@ function buildDetailFields(user, roleNamesOf) {
     { label: "status", value: user.status, font: BODY_FONT },
     { label: "language", value: user.language, font: MONO_FONT },
     { label: "roles (user_roles)", value: roleNamesOf(user).join(", ") || "—", font: BODY_FONT },
-    { label: "email_verified_at", value: user.email_verified_at || "not verified", font: MONO_FONT },
-    { label: "phone_verified_at", value: user.phone_verified_at || "not verified", font: MONO_FONT },
+    { label: "email_verified", value: user.email_verified ? "verified" : "not verified", font: MONO_FONT },
+    { label: "phone_verified", value: user.phone_verified ? "verified" : "not verified", font: MONO_FONT },
     { label: "is_social_login", value: String(user.is_social_login), font: MONO_FONT },
     { label: "social_provider", value: user.social_provider || "—", font: MONO_FONT },
     { label: "last_login_at", value: user.last_login_at || "never", font: MONO_FONT },
     { label: "created_at", value: user.created_at, font: MONO_FONT },
-    { label: "deleted_at", value: user.deleted_at || "—", font: MONO_FONT },
   ];
   if (!user.details) return base;
   const d = user.details;

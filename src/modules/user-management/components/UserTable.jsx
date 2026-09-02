@@ -5,11 +5,11 @@ import { RowActionButton } from "@/components/tables";
 import { darkBadgeStyle } from "@/utils/badgeTone";
 import { LANGUAGES, USER_STATUS_TONES } from "../constants/users.mock";
 
-const GRID_COLUMNS = "1.6fr 1.5fr 1.1fr 0.8fr 1fr 1fr 132px";
+const GRID_COLUMNS = "1.6fr 1.5fr 1.1fr 0.8fr 1fr 1fr 96px";
 
 const headerCellStyle = { fontSize: "var(--fs-body-sm)", fontWeight: "var(--fw-medium)", color: "var(--text-muted)" };
 
-export default function UserTable({ rows, roleNamesOf, noResults, darkMode, onView, onEdit, onToggleStatus, onToggleDeleted }) {
+export default function UserTable({ rows, roleNamesOf, noResults, darkMode, onView, onEdit, onToggleStatus, onDelete }) {
   const neutralStyle = darkBadgeStyle("neutral", darkMode);
 
   return (
@@ -29,7 +29,6 @@ export default function UserTable({ rows, roleNamesOf, noResults, darkMode, onVi
         const provider = user.is_social_login ? `${user.social_provider} sign-in` : "password sign-in";
         const metaLine = `${LANGUAGES[user.language] || user.language} · ${provider}`;
         const tone = USER_STATUS_TONES[user.status] || "neutral";
-        const isDeleted = !!user.deleted_at;
 
         return (
           <div
@@ -42,7 +41,6 @@ export default function UserTable({ rows, roleNamesOf, noResults, darkMode, onVi
               borderTop: "1px solid var(--border)",
               alignItems: "center",
               minWidth: 1120,
-              background: isDeleted ? "var(--surface-sunken)" : "transparent",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
@@ -79,7 +77,7 @@ export default function UserTable({ rows, roleNamesOf, noResults, darkMode, onVi
             <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
               {user.last_login_at ? user.last_login_at.slice(0, 10) : "never"}
             </div>
-            <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{user.created_at}</div>
+            <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{user.created_at.slice(0, 10)}</div>
 
             <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
               <RowActionButton title="View" icon={<Icon name="eye" size={15} />} onClick={() => onView(user.id)} />
@@ -89,20 +87,12 @@ export default function UserTable({ rows, roleNamesOf, noResults, darkMode, onVi
                 icon={<Icon name={user.status === "active" ? "pause" : "play"} size={15} />}
                 onClick={() => onToggleStatus(user.id)}
               />
-              {isDeleted ? (
-                <RowActionButton
-                  title="Restore"
-                  icon={<Icon name="arrow-uturn-left" size={15} />}
-                  onClick={() => onToggleDeleted(user.id)}
-                />
-              ) : (
-                <RowActionButton
-                  title="Delete"
-                  danger
-                  icon={<Icon name="trash" size={15} style={{ color: "var(--state-error)" }} />}
-                  onClick={() => onToggleDeleted(user.id)}
-                />
-              )}
+              <RowActionButton
+                title="Delete"
+                danger
+                icon={<Icon name="trash" size={15} style={{ color: "var(--state-error)" }} />}
+                onClick={() => onDelete(user.id)}
+              />
             </div>
           </div>
         );

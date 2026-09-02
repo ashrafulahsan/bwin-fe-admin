@@ -22,15 +22,13 @@ export default function UserFiltersBar({
   statusFilter,
   onStatus,
   statusOptions,
-  verifiedFilter,
-  onVerified,
-  verifiedOptions,
-  loginFilter,
-  onLogin,
-  loginOptions,
+  sortBy,
+  onSortBy,
+  sortByOptions,
+  sortOrder,
+  onSortOrder,
+  sortOrderOptions,
   onResetFilters,
-  showDeleted,
-  onToggleDeleted,
 }) {
   return (
     <div
@@ -56,11 +54,11 @@ export default function UserFiltersBar({
       <FilterField label="Status">
         <Select value={statusFilter} onChange={onStatus} options={statusOptions} />
       </FilterField>
-      <FilterField label="Verification">
-        <Select value={verifiedFilter} onChange={onVerified} options={verifiedOptions} />
+      <FilterField label="Sort by">
+        <Select value={sortBy} onChange={onSortBy} options={sortByOptions} />
       </FilterField>
-      <FilterField label="Login type">
-        <Select value={loginFilter} onChange={onLogin} options={loginOptions} />
+      <FilterField label="Order">
+        <Select value={sortOrder} onChange={onSortOrder} options={sortOrderOptions} />
       </FilterField>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -83,25 +81,6 @@ export default function UserFiltersBar({
           onMouseLeave={(e) => (e.currentTarget.style.background = "var(--surface-card)")}
         >
           Reset filters
-        </button>
-        <button
-          type="button"
-          onClick={onToggleDeleted}
-          style={{
-            padding: "9px 14px",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-sm)",
-            background: showDeleted ? "var(--surface-sunken)" : "transparent",
-            color: "var(--text-primary)",
-            fontFamily: "var(--font-body)",
-            fontSize: "var(--fs-body-sm)",
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-sunken)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = showDeleted ? "var(--surface-sunken)" : "transparent")}
-        >
-          {showDeleted ? "Showing deleted" : "Show deleted"}
         </button>
       </div>
     </div>

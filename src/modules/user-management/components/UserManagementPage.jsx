@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui";
+import { Pagination } from "@/components/tables";
+import { ConfirmDialog } from "@/components/common";
 import { useAppStore } from "@/store/appStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useUserManagement } from "../hooks";
@@ -15,6 +17,7 @@ export default function UserManagementPage() {
   const um = useUserManagement();
 
   const isListView = um.view === "list";
+  const deleteName = um.deleteTarget ? [um.deleteTarget.first_name, um.deleteTarget.last_name].filter(Boolean).join(" ") : "";
 
   return (
     <div style={{ fontFamily: "var(--font-body)" }}>
@@ -35,9 +38,11 @@ export default function UserManagementPage() {
         <div style={{ flex: 1 }} />
         {isListView && (
           <>
-            <span style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-              {um.filtered.length} of {um.totalCount} users
-            </span>
+            {um.meta && (
+              <span style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                {um.meta.total_items} user{um.meta.total_items === 1 ? "" : "s"}
+              </span>
+            )}
             <Button variant="accent" onClick={um.openAddUser}>
               Add user
             </Button>
@@ -95,31 +100,48 @@ export default function UserManagementPage() {
             statusFilter={um.statusFilter}
             onStatus={(e) => um.setStatusFilter(e.target.value)}
             statusOptions={um.statusOptions}
-            verifiedFilter={um.verifiedFilter}
-            onVerified={(e) => um.setVerifiedFilter(e.target.value)}
-            verifiedOptions={um.verifiedOptions}
-            loginFilter={um.loginFilter}
-            onLogin={(e) => um.setLoginFilter(e.target.value)}
-            loginOptions={um.loginOptions}
+            sortBy={um.sortBy}
+            onSortBy={(e) => um.setSortBy(e.target.value)}
+            sortByOptions={um.sortByOptions}
+            sortOrder={um.sortOrder}
+            onSortOrder={(e) => um.setSortOrder(e.target.value)}
+            sortOrderOptions={um.sortOrderOptions}
             onResetFilters={um.resetFilters}
-            showDeleted={um.showDeleted}
-            onToggleDeleted={um.toggleShowDeleted}
           />
 
-          <UserTable
-            rows={um.filtered}
-            roleNamesOf={um.roleNamesOf}
-            noResults={um.noResults}
-            darkMode={darkMode}
-            onView={um.openDetail}
-            onEdit={um.openDetail}
-            onToggleStatus={um.toggleStatus}
-            onToggleDeleted={um.toggleDeletedFor}
-          />
+          {um.loading ? (
+            <div style={{ padding: "40px 20px", textAlign: "center", fontSize: "var(--fs-body-sm)", color: "var(--text-muted)" }}>
+              Loading users…
+            </div>
+          ) : (
+            <>
+              <UserTable
+                rows={um.rows}
+                roleNamesOf={um.roleNamesOf}
+                noResults={um.noResults}
+                darkMode={darkMode}
+                onView={um.openDetail}
+                onEdit={um.openDetail}
+                onToggleStatus={um.toggleStatus}
+                onDelete={um.requestDelete}
+              />
+              <Pagination meta={um.meta} onPrev={um.onPrevPage} onNext={um.onNextPage} />
+            </>
+          )}
         </>
       )}
 
       <UserDetailModal user={um.current} roleNamesOf={um.roleNamesOf} onClose={um.closeDetail} />
+
+      <ConfirmDialog
+        open={um.deleteOpen}
+        title="Delete this user?"
+        message={`"${deleteName}" will be soft-deleted and removed from this list. This can only be undone by an administrator directly, not from this page.`}
+        cancelLabel="Keep it"
+        confirmLabel={um.deleting ? "Deleting…" : "Delete"}
+        onCancel={um.cancelDelete}
+        onConfirm={um.confirmDelete}
+      />
     </div>
   );
 }
