@@ -6,7 +6,15 @@ import { useToast } from "@/hooks/useToast";
 import { USER_STATUSES } from "../constants/users.mock";
 import { EMPTY_USER_FORM } from "../constants/userFormFields";
 import { validateUserForm } from "../validation/validateUserForm";
-import { createUser, createUserDetails, deleteUser, getAllRoles, getUsers, updateUserStatus } from "../services";
+import {
+  createUser,
+  createUserDetails,
+  deleteUser,
+  getAllRoles,
+  getUserDetails,
+  getUsers,
+  updateUserStatus,
+} from "../services";
 
 const PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 350;
@@ -139,6 +147,22 @@ export function useUserManagement() {
   });
 
   const { data: roles } = useQuery({ queryKey: ["roles", "all"], queryFn: getAllRoles });
+
+  // GET /users doesn't embed user_details — the view modal fetches it
+  // separately, only once a row is actually opened.
+  const {
+    data: detailData,
+    isLoading: detailsLoading,
+    isError: detailsFailed,
+  } = useQuery({
+    queryKey: ["users", "details", detailId],
+    queryFn: () => getUserDetails(detailId),
+    enabled: !!detailId,
+  });
+
+  useEffect(() => {
+    if (detailsFailed) showError("Couldn't load this user's extended details.");
+  }, [detailsFailed, showError]);
 
   useEffect(() => {
     if (usersFailed) showError("Couldn't load users from the server.");
@@ -285,7 +309,8 @@ export function useUserManagement() {
     { value: "asc", label: "Ascending" },
   ];
 
-  const current = users.find((u) => u.id === detailId) || null;
+  const detailUser = users.find((u) => u.id === detailId) || null;
+  const current = detailUser ? { ...detailUser, details: detailData || null } : null;
   const deleting = users.find((u) => u.id === deleteId) || null;
 
   return {
@@ -327,6 +352,7 @@ export function useUserManagement() {
 
     // detail modal
     current,
+    detailsLoading: detailsLoading && !!detailId,
     closeDetail: () => setDetailId(null),
 
     // delete confirm

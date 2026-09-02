@@ -133,7 +133,7 @@ export default function UserManagementPage() {
         </>
       )}
 
-      <UserDetailModal user={um.current} roleNamesOf={um.roleNamesOf} onClose={um.closeDetail} />
+      <UserDetailModal user={um.current} detailsLoading={um.detailsLoading} roleNamesOf={um.roleNamesOf} onClose={um.closeDetail} />
 
       <ConfirmDialog
         open={um.deleteOpen}

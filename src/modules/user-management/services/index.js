@@ -3,6 +3,7 @@ import {
   createUserRequest,
   deleteUserRequest,
   getAllRolesRequest,
+  getUserDetailsRequest,
   getUsersRequest,
   updateUserStatusRequest,
 } from "../api";
@@ -42,4 +43,17 @@ export async function createUser(payload) {
 export async function createUserDetails(userId, payload) {
   const response = await createUserDetailsRequest(userId, payload);
   return response.data?.data;
+}
+
+// `UserDetailsRead`, or `null` if this user has never had a details row
+// created — the backend 404s in that case, which is the normal state for a
+// user nobody has filled extended details in for yet, not an error.
+export async function getUserDetails(userId) {
+  try {
+    const response = await getUserDetailsRequest(userId);
+    return response.data?.data ?? null;
+  } catch (error) {
+    if (error?.response?.status === 404) return null;
+    throw error;
+  }
 }
