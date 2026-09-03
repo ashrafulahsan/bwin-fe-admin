@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useCurrentUser } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
+import { resolveMediaUrl } from "@/utils/media";
 import { getMyActivity, getMyDetails, updateMyDetails, updateMyProfile } from "../services";
 import { BASIC_FIELDS, PROFILE_GROUPS } from "../constants/adminProfile.mock";
 
@@ -331,7 +332,7 @@ export function useProfile() {
     roleLabel,
     basicFields,
     bioField: { value: pf.bio || "", onChange: setField("bio") },
-    avatarSrc: pf.avatar_url || "",
+    avatarSrc: resolveMediaUrl(pf.avatar_url),
     hasCustomAvatar,
     avatarHint: avatarFileName || "JPG or PNG, square, at least 400×400px",
     onAvatarFile,

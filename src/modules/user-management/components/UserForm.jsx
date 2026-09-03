@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { Avatar, Button } from "@/components/ui";
+import { resolveMediaUrl } from "@/utils/media";
 import FieldGroup from "./FieldGroup";
 import { USER_FORM_GROUPS } from "../constants/userFormFields";
 import { USER_STATUSES, LANGUAGES } from "../constants/users.mock";
@@ -74,7 +75,7 @@ export default function UserForm({
             Profile picture
           </legend>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Avatar name={fullName} src={form.avatar_url || undefined} size={56} style={{ border: "1px solid var(--border)" }} />
+            <Avatar name={fullName} src={resolveMediaUrl(form.avatar_url) || undefined} size={56} style={{ border: "1px solid var(--border)" }} />
             <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
