@@ -13,10 +13,12 @@ import {
   getAllRoles,
   getUserDetails,
   getUsers,
+  removeUserAvatar,
   replaceUserRoles,
   updateUser,
   updateUserDetails,
   updateUserStatus,
+  uploadUserAvatar,
 } from "../services";
 
 const PAGE_SIZE = 10;
@@ -67,11 +69,11 @@ const DETAILS_FIELD_KEYS = [
 ];
 const DETAILS_NUMBER_KEYS = new Set(["years_of_experience", "graduation_year"]);
 
-// avatar_url is deliberately left out of this payload: there is no upload
-// endpoint yet (app/modules/media is an empty stub), so the value the "Add
-// user" form holds is only a local blob: preview for the admin's own screen
-// — sending it would write an unusable, tab-local reference into the row.
-// See onAvatarFile below (same approach the profile page's photo field uses).
+// avatar_url is deliberately left out of this payload: the form only ever
+// holds either the persisted URL or a local blob: preview, never something
+// worth writing to the row directly. The real image goes up separately,
+// after the user exists, via POST /users/{id}/avatar — see
+// createUserMutation below.
 function buildUserCreatePayload(form) {
   return {
     first_name: form.first_name.trim(),
@@ -96,11 +98,12 @@ function buildUserDetailsPayload(form) {
   return payload;
 }
 
-// Same avatar_url omission as buildUserCreatePayload — no upload endpoint
-// exists to make the value real. A blank text field here is likewise
-// omitted rather than nulled, so clearing a field client-side without
-// meaning to doesn't blank it out server-side (same convention the profile
-// module's compact() helper uses).
+// Same avatar_url omission as buildUserCreatePayload — the image itself
+// goes through POST/DELETE /users/{id}/avatar, driven by avatarAction, not
+// this JSON payload. A blank text field here is likewise omitted rather
+// than nulled, so clearing a field client-side without meaning to doesn't
+// blank it out server-side (same convention the profile module's compact()
+// helper uses).
 function buildUserUpdatePayload(form) {
   return {
     first_name: form.first_name.trim(),
@@ -162,6 +165,12 @@ export function useUserManagement() {
   const [formError, setFormError] = useState(null);
   const [form, setForm] = useState(EMPTY_USER_FORM);
   const [avatarFileName, setAvatarFileName] = useState(null);
+  // The actual File object a picked photo needs to be uploaded, plus what to
+  // do with it on save — `form.avatar_url` only ever holds a preview (the
+  // persisted URL, or a local blob: one), never something worth PATCHing
+  // straight into the user row. null = leave the avatar as it is.
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarAction, setAvatarAction] = useState(null); // null | "upload" | "remove"
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search.trim()), SEARCH_DEBOUNCE_MS);
@@ -244,11 +253,16 @@ export function useUserManagement() {
   });
 
   const createUserMutation = useMutation({
-    mutationFn: async (formValues) => {
-      const user = await createUser(buildUserCreatePayload(formValues));
+    mutationFn: async ({ formValues, avatarFile: file, avatarAction: action }) => {
+      let user = await createUser(buildUserCreatePayload(formValues));
       const detailsPayload = buildUserDetailsPayload(formValues);
       if (Object.keys(detailsPayload).length > 0) {
         await createUserDetails(user.id, detailsPayload);
+      }
+      // "remove" is meaningless for a user that didn't exist a moment ago —
+      // only an actual picked file is worth a follow-up request here.
+      if (action === "upload" && file) {
+        user = await uploadUserAvatar(user.id, file);
       }
       return user;
     },
@@ -258,6 +272,8 @@ export function useUserManagement() {
       setFormError(null);
       setForm(EMPTY_USER_FORM);
       setAvatarFileName(null);
+      setAvatarFile(null);
+      setAvatarAction(null);
       setListNotice(`${user.full_name || user.first_name} was created.`);
       showSuccess("User created.");
     },
@@ -269,14 +285,19 @@ export function useUserManagement() {
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ userId, formValues, hadDetails }) => {
-      const user = await updateUser(userId, buildUserUpdatePayload(formValues));
+    mutationFn: async ({ userId, formValues, hadDetails, avatarFile: file, avatarAction: action }) => {
+      let user = await updateUser(userId, buildUserUpdatePayload(formValues));
       await replaceUserRoles(userId, formValues.role_ids);
       const detailsPayload = buildUserDetailsPayload(formValues);
       if (hadDetails) {
         await updateUserDetails(userId, detailsPayload);
       } else if (Object.keys(detailsPayload).length > 0) {
         await createUserDetails(userId, detailsPayload);
+      }
+      if (action === "upload" && file) {
+        user = await uploadUserAvatar(userId, file);
+      } else if (action === "remove") {
+        user = await removeUserAvatar(userId);
       }
       return user;
     },
@@ -288,6 +309,8 @@ export function useUserManagement() {
       setFormError(null);
       setForm(EMPTY_USER_FORM);
       setAvatarFileName(null);
+      setAvatarFile(null);
+      setAvatarAction(null);
       setListNotice(`${user.full_name || user.first_name} was updated.`);
       showSuccess("User updated.");
     },
@@ -341,13 +364,22 @@ export function useUserManagement() {
       role_ids: f.role_ids.includes(roleId) ? f.role_ids.filter((r) => r !== roleId) : f.role_ids.concat(roleId),
     }));
 
+  // Picking a file only stages it — the actual upload happens on save,
+  // bundled with everything else so a cancelled form never touches the
+  // server. `avatar_url` here is a local blob: preview only, for the
+  // <Avatar> in the form to render; it is never sent as-is (see
+  // buildUserCreatePayload / buildUserUpdatePayload above).
   const onAvatarFile = (file) => {
     if (!file) return;
     setAvatarFileName(file.name);
+    setAvatarFile(file);
+    setAvatarAction("upload");
     setForm((f) => ({ ...f, avatar_url: URL.createObjectURL(file) }));
   };
   const removeAvatar = () => {
     setAvatarFileName(null);
+    setAvatarFile(null);
+    setAvatarAction("remove");
     setForm((f) => ({ ...f, avatar_url: "" }));
   };
 
@@ -362,6 +394,8 @@ export function useUserManagement() {
     setFormError(null);
     setForm(EMPTY_USER_FORM);
     setAvatarFileName(null);
+    setAvatarFile(null);
+    setAvatarAction(null);
   };
 
   const saveUser = () => {
@@ -371,7 +405,7 @@ export function useUserManagement() {
       return;
     }
     setFormError(null);
-    createUserMutation.mutate(form);
+    createUserMutation.mutate({ formValues: form, avatarFile, avatarAction });
   };
 
   // Basic + Roles come from the row already held in the list query, so they
@@ -386,6 +420,8 @@ export function useUserManagement() {
     setFormError(null);
     setListNotice(null);
     setAvatarFileName(null);
+    setAvatarFile(null);
+    setAvatarAction(null);
     setForm(formFromUser(user));
   };
   const cancelEdit = () => {
@@ -394,6 +430,8 @@ export function useUserManagement() {
     setFormError(null);
     setForm(EMPTY_USER_FORM);
     setAvatarFileName(null);
+    setAvatarFile(null);
+    setAvatarAction(null);
   };
 
   const saveEdit = () => {
@@ -404,7 +442,13 @@ export function useUserManagement() {
       return;
     }
     setFormError(null);
-    updateUserMutation.mutate({ userId: editId, formValues: form, hadDetails: !!detailData });
+    updateUserMutation.mutate({
+      userId: editId,
+      formValues: form,
+      hadDetails: !!detailData,
+      avatarFile,
+      avatarAction,
+    });
   };
 
   const resetFilters = () => {

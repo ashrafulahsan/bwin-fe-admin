@@ -5,10 +5,12 @@ import {
   getAllRolesRequest,
   getUserDetailsRequest,
   getUsersRequest,
+  removeUserAvatarRequest,
   replaceUserRolesRequest,
   updateUserDetailsRequest,
   updateUserRequest,
   updateUserStatusRequest,
+  uploadUserAvatarRequest,
 } from "../api";
 
 // Every backend response is wrapped in `{success, message, data}` — unwrap
@@ -76,5 +78,17 @@ export async function updateUserDetails(userId, payload) {
 // `UserRead` with its complete, replaced role set.
 export async function replaceUserRoles(userId, roleIds) {
   const response = await replaceUserRolesRequest(userId, roleIds);
+  return response.data?.data;
+}
+
+// `UserRead` with `avatar_url` pointing at the newly stored image.
+export async function uploadUserAvatar(userId, file) {
+  const response = await uploadUserAvatarRequest(userId, file);
+  return response.data?.data;
+}
+
+// `UserRead` with `avatar_url` cleared.
+export async function removeUserAvatar(userId) {
+  const response = await removeUserAvatarRequest(userId);
   return response.data?.data;
 }

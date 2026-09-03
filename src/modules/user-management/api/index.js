@@ -39,3 +39,19 @@ export function replaceUserRolesRequest(userId, roleIds) {
 export function deleteUserRequest(userId) {
   return apiClient.delete(`/users/${userId}`);
 }
+
+export function uploadUserAvatarRequest(userId, file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  // apiClient defaults every request to `Content-Type: application/json`.
+  // Overriding it to a bare "multipart/form-data" (no boundary) would break
+  // the upload — `undefined` removes the header instead, so the browser can
+  // set its own `multipart/form-data; boundary=...` from the FormData body.
+  return apiClient.post(`/users/${userId}/avatar`, formData, {
+    headers: { "Content-Type": undefined },
+  });
+}
+
+export function removeUserAvatarRequest(userId) {
+  return apiClient.delete(`/users/${userId}/avatar`);
+}
