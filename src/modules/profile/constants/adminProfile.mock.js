@@ -13,7 +13,7 @@ export const BASIC_FIELDS = [
   { key: "last_name", label: "Last name" },
   { key: "email", label: "Email" },
   { key: "phone", label: "Phone" },
-  { key: "language", label: "Language" },
+  { key: "language", label: "Language", type: "select" },
 ];
 
 export const PROFILE_GROUPS = [

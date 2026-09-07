@@ -61,7 +61,11 @@ const BLANK_DETAILS = {
 // Detail fields the backend stores as numbers, not text.
 const NUMERIC_DETAIL_FIELDS = new Set(["years_of_experience", "graduation_year"]);
 
-const LANGUAGE_LABELS = { en: "English", bn: "বাংলা" };
+const LANGUAGE_OPTIONS = [
+  { value: "en", label: "English" },
+  { value: "bn", label: "বাংলা" },
+];
+const LANGUAGE_LABELS = Object.fromEntries(LANGUAGE_OPTIONS.map((o) => [o.value, o.label]));
 
 const FAMILIES = {
   navy: { light: ["var(--navy-100)", "var(--navy-700)"], dark: ["var(--navy-600)", "var(--navy-100)"] },
@@ -243,7 +247,12 @@ export function useProfile() {
 
   const pf = profileFields;
 
-  const basicFields = BASIC_FIELDS.map((f) => ({ ...f, value: pf[f.key] || "", onChange: setField(f.key) }));
+  const basicFields = BASIC_FIELDS.map((f) => ({
+    ...f,
+    value: pf[f.key] || "",
+    onChange: setField(f.key),
+    options: f.key === "language" ? LANGUAGE_OPTIONS : undefined,
+  }));
 
   const detailGroups = PROFILE_GROUPS.map((g) => ({
     title: g.title,

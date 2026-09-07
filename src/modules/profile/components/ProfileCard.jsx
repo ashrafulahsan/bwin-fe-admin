@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Avatar, Button, Input, Textarea } from "@/components/ui";
+import { Avatar, Button, Input, Select, Textarea } from "@/components/ui";
 import { CameraCapture } from "@/components/common";
 
 export default function ProfileCard({
@@ -118,7 +118,11 @@ export default function ProfileCard({
           {basicFields.map((bf) => (
             <div key={bf.key} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ fontSize: "var(--fs-body-sm)", fontWeight: "var(--fw-medium)", color: "var(--text-secondary)" }}>{bf.label}</span>
-              <Input value={bf.value} onChange={bf.onChange} />
+              {bf.type === "select" ? (
+                <Select value={bf.value} onChange={bf.onChange} options={bf.options} />
+              ) : (
+                <Input value={bf.value} onChange={bf.onChange} />
+              )}
             </div>
           ))}
 
