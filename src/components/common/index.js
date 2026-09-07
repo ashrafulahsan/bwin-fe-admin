@@ -4,3 +4,4 @@ export { default as Toast } from "./Toast";
 export { default as UnderlineTabs } from "./UnderlineTabs";
 export { default as ConfirmDialog } from "./ConfirmDialog";
 export { default as ImageDropzone } from "./ImageDropzone";
+export { default as CameraCapture } from "./CameraCapture";

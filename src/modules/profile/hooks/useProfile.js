@@ -16,6 +16,12 @@ import {
 } from "../services";
 import { BASIC_FIELDS, PROFILE_GROUPS } from "../constants/adminProfile.mock";
 
+// Mirrors the backend's ImageUploadService (ALLOWED_IMAGE_EXTENSIONS,
+// settings.max_upload_size_mb) — checked here only to fail fast; the backend
+// remains the source of truth and validates again regardless.
+const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"]);
+const MAX_AVATAR_BYTES = 10 * 1024 * 1024;
+
 // Basic info has no mock fallback — it's either the real value from
 // GET /auth/me or blank.
 const BLANK_BASIC = {
@@ -269,6 +275,14 @@ export function useProfile() {
 
   const onAvatarFile = (file) => {
     if (!file) return;
+    if (!ALLOWED_AVATAR_TYPES.has(file.type)) {
+      showError("Please choose a JPG, PNG, WebP, GIF, or SVG image.");
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      showError("That image is larger than the 10 MB limit.");
+      return;
+    }
     const url = URL.createObjectURL(file);
     setAvatarFileName(file.name);
     setAvatarFile(file);

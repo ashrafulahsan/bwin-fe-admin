@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Avatar, Button, Input, Textarea } from "@/components/ui";
+import { CameraCapture } from "@/components/common";
 
 export default function ProfileCard({
   profile,
@@ -21,6 +22,7 @@ export default function ProfileCard({
   cancelBasic,
 }) {
   const fileInputRef = useRef(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   return (
     <div style={{ background: "var(--surface-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
@@ -90,6 +92,15 @@ export default function ProfileCard({
                   </button>
                   <button
                     type="button"
+                    onClick={() => setCameraOpen(true)}
+                    style={{ padding: "8px 12px", border: "1px solid var(--border-strong)", borderRadius: "var(--radius-sm)", background: "var(--surface-card)", color: "var(--text-primary)", fontFamily: "var(--font-body)", fontSize: "var(--fs-body-sm)", fontWeight: "var(--fw-medium)", cursor: "pointer", whiteSpace: "nowrap" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-sunken)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--surface-card)")}
+                  >
+                    Take photo
+                  </button>
+                  <button
+                    type="button"
                     onClick={removeAvatar}
                     style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", background: "transparent", color: "var(--text-muted)", fontFamily: "var(--font-body)", fontSize: "var(--fs-body-sm)", cursor: "pointer", whiteSpace: "nowrap" }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-sunken)")}
@@ -126,6 +137,15 @@ export default function ProfileCard({
           </div>
         </div>
       )}
+
+      <CameraCapture
+        open={cameraOpen}
+        onCapture={(file) => {
+          setCameraOpen(false);
+          onAvatarFile(file);
+        }}
+        onCancel={() => setCameraOpen(false)}
+      />
     </div>
   );
 }
