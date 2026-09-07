@@ -88,8 +88,12 @@ export const downloadFile = async (url, params = {}) => {
  */
 export const uploadFile = async (url, formData, onUploadProgress) => {
   const response = await apiClient.post(url, formData, {
+    // apiClient defaults every request to `Content-Type: application/json`.
+    // Setting it to a bare "multipart/form-data" (no boundary) would break
+    // the upload — `undefined` removes the header instead, so the browser
+    // sets its own `multipart/form-data; boundary=...` from the FormData body.
     headers: {
-      "Content-Type": "multipart/form-data",
+      "Content-Type": undefined,
     },
     onUploadProgress,
   });

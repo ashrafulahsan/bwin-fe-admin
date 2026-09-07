@@ -6,7 +6,14 @@ import { useSettingsStore } from "@/store/settingsStore";
 import { useCurrentUser } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
 import { resolveMediaUrl } from "@/utils/media";
-import { getMyActivity, getMyDetails, updateMyDetails, updateMyProfile } from "../services";
+import {
+  getMyActivity,
+  getMyDetails,
+  removeMyAvatar,
+  updateMyDetails,
+  updateMyProfile,
+  uploadMyAvatar,
+} from "../services";
 import { BASIC_FIELDS, PROFILE_GROUPS } from "../constants/adminProfile.mock";
 
 // Basic info has no mock fallback — it's either the real value from
@@ -145,9 +152,22 @@ export function useProfile() {
   const [savedFlash, setSavedFlash] = useState(null);
   const [snapshot, setSnapshot] = useState(null);
   const [avatarFileName, setAvatarFileName] = useState(null);
+  // Staged until save: picking/removing a photo only updates the preview —
+  // the actual upload/removal call fires from saveBasic, alongside the rest
+  // of the basic-info patch.
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarAction, setAvatarAction] = useState(null); // "upload" | "remove" | null
 
   const updateProfileMutation = useMutation({
-    mutationFn: updateMyProfile,
+    mutationFn: async ({ payload, file, action }) => {
+      let user = await updateMyProfile(payload);
+      if (action === "upload" && file) {
+        user = await uploadMyAvatar(user.id, file);
+      } else if (action === "remove") {
+        user = await removeMyAvatar(user.id);
+      }
+      return user;
+    },
     onSuccess: (data) => {
       queryClient.setQueryData(["currentUser"], data);
       showSuccess("Basic information saved.");
@@ -251,11 +271,15 @@ export function useProfile() {
     if (!file) return;
     const url = URL.createObjectURL(file);
     setAvatarFileName(file.name);
+    setAvatarFile(file);
+    setAvatarAction("upload");
     setProfileFields((prev) => ({ ...prev, avatar_url: url }));
   };
 
   const removeAvatar = () => {
     setAvatarFileName(null);
+    setAvatarFile(null);
+    setAvatarAction("remove");
     setProfileFields((prev) => ({ ...prev, avatar_url: "" }));
   };
 
@@ -279,13 +303,19 @@ export function useProfile() {
       language: pf.language,
       bio: pf.bio,
     });
-    updateProfileMutation.mutate(payload, {
-      onSuccess: () => {
-        setEditBasic(false);
-        setSnapshot(null);
-        setSavedFlash("basic");
-      },
-    });
+    updateProfileMutation.mutate(
+      { payload, file: avatarFile, action: avatarAction },
+      {
+        onSuccess: () => {
+          setEditBasic(false);
+          setSnapshot(null);
+          setSavedFlash("basic");
+          setAvatarFile(null);
+          setAvatarAction(null);
+          setAvatarFileName(null);
+        },
+      }
+    );
   };
 
   const saveDetails = () => {
@@ -307,6 +337,9 @@ export function useProfile() {
     setEditBasic(false);
     if (snapshot) setProfileFields(snapshot);
     setSnapshot(null);
+    setAvatarFile(null);
+    setAvatarAction(null);
+    setAvatarFileName(null);
   };
   const cancelDetails = () => {
     setEditDetails(false);

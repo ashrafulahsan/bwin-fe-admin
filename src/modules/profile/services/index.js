@@ -2,8 +2,10 @@ import {
   changePasswordRequest,
   getMyActivityRequest,
   getMyDetailsRequest,
+  removeMyAvatarRequest,
   updateMyDetailsRequest,
   updateMyProfileRequest,
+  uploadMyAvatarRequest,
 } from "../api";
 
 // Every backend response is wrapped in `{success, message, data}` — unwrap
@@ -36,5 +38,19 @@ export async function getMyActivity(params) {
 // pair, since the change retires every token the account held.
 export async function changePassword(payload) {
   const response = await changePasswordRequest(payload);
+  return response.data?.data;
+}
+
+// `UserRead` with `avatar_url` pointing at the newly stored image.
+// `uploadFile` (src/services/apiUtils.js) already unwraps the axios
+// response, so `envelope` here is the `{success, message, data}` body.
+export async function uploadMyAvatar(userId, file) {
+  const envelope = await uploadMyAvatarRequest(userId, file);
+  return envelope?.data;
+}
+
+// `UserRead` with `avatar_url` cleared.
+export async function removeMyAvatar(userId) {
+  const response = await removeMyAvatarRequest(userId);
   return response.data?.data;
 }
