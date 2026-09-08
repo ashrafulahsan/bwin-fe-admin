@@ -11,22 +11,13 @@ export default function MenuFormModal({
   onFieldChange,
   categoryOptions,
   parentOptions,
-  fileRef,
-  pickImage,
-  onImageFile,
   clearImage,
   hasImage,
   imagePreviewCss,
   imagePlaceholderLabel,
-  uploadLabel,
-  imageHint,
-  imageDropBorder,
-  imageDropBg,
-  onImageDragOver,
-  onImageDragLeave,
-  onImageDrop,
   formError,
   submitLabel,
+  submitting,
   onClose,
   onSubmit,
 }) {
@@ -88,13 +79,8 @@ export default function MenuFormModal({
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1/-1" }}>
-            <span style={captionStyle}>Image (optional)</span>
-            <div
-              onDragOver={onImageDragOver}
-              onDragLeave={onImageDragLeave}
-              onDrop={onImageDrop}
-              style={{ display: "flex", alignItems: "center", gap: 14, padding: 12, border: `1px dashed ${imageDropBorder}`, borderRadius: "var(--radius-sm)", background: imageDropBg }}
-            >
+            <span style={captionStyle}>Image URL (optional)</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <div
                 style={{
                   flex: "none",
@@ -115,25 +101,24 @@ export default function MenuFormModal({
               >
                 {imagePlaceholderLabel}
               </div>
-              <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <Button variant="secondary" onClick={pickImage}>
-                    {uploadLabel}
-                  </Button>
-                  {hasImage && (
-                    <button
-                      type="button"
-                      onClick={clearImage}
-                      style={{ padding: "8px 12px", border: "1px solid var(--border-strong)", borderRadius: "var(--radius-sm)", background: "var(--surface-card)", color: "var(--red-700)", fontFamily: "var(--font-body)", fontSize: "var(--fs-body-sm)", fontWeight: "var(--fw-medium)", cursor: "pointer" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--red-100)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "var(--surface-card)")}
-                    >
-                      Remove
-                    </button>
-                  )}
-                  <input ref={fileRef} type="file" accept="image/*" onChange={onImageFile} style={{ display: "none" }} />
-                </div>
-                <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{imageHint}</div>
+              <div style={{ minWidth: 0, flex: 1, display: "flex", gap: 8 }}>
+                <Input
+                  style={{ flex: 1 }}
+                  value={form.image}
+                  onChange={(e) => onFieldChange("image", e.target.value)}
+                  placeholder="https://cdn.example.com/icons/services.svg"
+                />
+                {hasImage && (
+                  <button
+                    type="button"
+                    onClick={clearImage}
+                    style={{ flex: "none", padding: "8px 12px", border: "1px solid var(--border-strong)", borderRadius: "var(--radius-sm)", background: "var(--surface-card)", color: "var(--red-700)", fontFamily: "var(--font-body)", fontSize: "var(--fs-body-sm)", fontWeight: "var(--fw-medium)", cursor: "pointer" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--red-100)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--surface-card)")}
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -151,10 +136,12 @@ export default function MenuFormModal({
         )}
 
         <div style={{ padding: "18px 24px 20px", display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose} disabled={submitting}>
             Cancel
           </Button>
-          <Button onClick={onSubmit}>{submitLabel}</Button>
+          <Button onClick={onSubmit} disabled={submitting}>
+            {submitting ? "Saving…" : submitLabel}
+          </Button>
         </div>
       </div>
     </div>

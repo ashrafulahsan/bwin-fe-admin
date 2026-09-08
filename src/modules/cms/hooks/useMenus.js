@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
-import { MENUS, MENU_CATEGORIES } from "../constants/menus.mock";
+import { createMenu, deleteMenu, getMenuCategories, getMenus, restoreMenu, updateMenu } from "../services";
 
 const BLANK = {
   id: null,
@@ -14,15 +15,21 @@ const BLANK = {
   parent_id: "",
   menu_category_id: "",
   order: 1,
-  imageName: "",
 };
 
-const nowStamp = () => new Date().toISOString().slice(0, 16).replace("T", " ");
+// A navigation is "small and shallow" by design (see the menus module's
+// docstrings) — one page comfortably holds a whole category's tree, so
+// there is no pagination UI here, just a page_size high enough that a
+// single fetch always covers it.
+const CATEGORY_PAGE_SIZE = 100;
+
+const errorMessage = (error, fallback) => error?.response?.data?.message || fallback;
 
 export function useMenus() {
-  const [items, setItems] = useState(MENUS);
-  const [baseline, setBaseline] = useState(MENUS);
-  const [cat, setCat] = useState(MENU_CATEGORIES[0].id);
+  const { showSuccess, showWarning, showError } = useToast();
+  const queryClient = useQueryClient();
+
+  const [cat, setCat] = useState(null);
   const [search, setSearch] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
   const [collapsed, setCollapsed] = useState({});
@@ -33,45 +40,117 @@ export function useMenus() {
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState({ ...BLANK });
   const [formError, setFormError] = useState(null);
-  const [imageOver, setImageOver] = useState(false);
   const [trashId, setTrashId] = useState(null);
-  const [dirty, setDirty] = useState(false);
-  const { showSuccess, showWarning } = useToast();
-  const seqRef = useRef(0);
-  const fileRef = useRef(null);
 
-  const live = () => items.filter((i) => i.menu_category_id === cat);
+  const categoriesQuery = useQuery({ queryKey: ["menuCategories"], queryFn: getMenuCategories });
+  const categories = categoriesQuery.data || [];
+
+  const firstCategoryId = categoriesQuery.data?.[0]?.id;
+  useEffect(() => {
+    if (!cat && firstCategoryId) {
+      // Seeding the selected tab from the fetched list, once, when it
+      // arrives — not deriving render output, so the effect is warranted here.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCat(firstCategoryId);
+    }
+  }, [cat, firstCategoryId]);
+
+  const menusQuery = useQuery({
+    queryKey: ["menus", cat, showDeleted],
+    queryFn: () => getMenus({ menu_category_id: cat, include_deleted: showDeleted, page_size: CATEGORY_PAGE_SIZE }),
+    enabled: !!cat,
+    placeholderData: (prev) => prev,
+  });
+
+  // Per-category counts for the cards above the tree — one cheap,
+  // meta-only request per category (page_size: 1) rather than a new
+  // aggregate endpoint.
+  const countsQuery = useQuery({
+    queryKey: ["menuCounts", categories.map((c) => c.id)],
+    queryFn: () =>
+      Promise.all(
+        categories.map((c) =>
+          getMenus({ menu_category_id: c.id, page_size: 1 }).then((page) => [c.id, page.meta?.total_items ?? 0])
+        )
+      ).then((pairs) => Object.fromEntries(pairs)),
+    enabled: categories.length > 0,
+  });
+  const counts = countsQuery.data || {};
+
+  const invalidateMenus = () => queryClient.invalidateQueries({ queryKey: ["menus", cat] });
+  const invalidateCounts = () => queryClient.invalidateQueries({ queryKey: ["menuCounts"] });
+
+  const items = () => menusQuery.data?.items || [];
 
   const childrenOf = (parentId, list) =>
-    (list || live()).filter((i) => (i.parent_id || null) === (parentId || null)).sort((a, b) => a.order - b.order);
+    (list || items()).filter((i) => (i.parent_id || null) === (parentId || null)).sort((a, b) => a.order - b.order);
 
   const isDescendant = (candidateId, ancestorId) => {
-    let node = items.find((i) => i.id === candidateId);
+    let node = items().find((i) => i.id === candidateId);
     let guard = 0;
     while (node && node.parent_id && guard++ < 50) {
       if (node.parent_id === ancestorId) return true;
-      node = items.find((i) => i.id === node.parent_id);
+      node = items().find((i) => i.id === node.parent_id);
     }
     return false;
   };
 
+  // -- Mutations --------------------------------------------------------
+
+  const moveMutation = useMutation({
+    mutationFn: (writes) => Promise.all(writes.map(({ id, patch }) => updateMenu(id, patch))),
+    onSuccess: () => {
+      invalidateMenus();
+    },
+    onError: (error) => {
+      showError(errorMessage(error, "Couldn't reorder that item."));
+      invalidateMenus();
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: ({ id, payload }) => (id ? updateMenu(id, payload) : createMenu(payload)),
+    onSuccess: () => {
+      invalidateMenus();
+      invalidateCounts();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteMenu,
+    onSuccess: () => {
+      invalidateMenus();
+      invalidateCounts();
+    },
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: restoreMenu,
+    onSuccess: () => {
+      invalidateMenus();
+      invalidateCounts();
+    },
+  });
+
   // Reparent + renumber siblings 1..n, mirroring ck_menus_order_positive.
+  // The backend only ever repositions the item you patch — it never shifts
+  // its new siblings for you — so every sibling whose position actually
+  // changes gets its own PATCH, batched into one mutation.
   const move = (dId, targetId, pos) => {
     if (!dId) return;
     if (pos !== "root" && (dId === targetId || isDescendant(targetId, dId))) {
       showWarning("An item cannot be nested inside itself.");
       return;
     }
-    const drag = items.find((i) => i.id === dId);
+    const all = items();
+    const drag = all.find((i) => i.id === dId);
     if (!drag) return;
-    const target = items.find((i) => i.id === targetId) || null;
+    const target = all.find((i) => i.id === targetId) || null;
     let newParent = null;
     if (pos === "inside") newParent = targetId;
     else if (pos !== "root") newParent = target ? target.parent_id || null : null;
 
-    const sibs = live()
-      .filter((i) => (i.parent_id || null) === newParent && i.id !== dId)
-      .sort((a, b) => a.order - b.order);
+    const sibs = all.filter((i) => (i.parent_id || null) === newParent && i.id !== dId).sort((a, b) => a.order - b.order);
     let idx = sibs.length;
     if (pos === "before" || pos === "after") {
       const at = sibs.findIndex((i) => i.id === targetId);
@@ -80,31 +159,25 @@ export function useMenus() {
     }
     const ordered = sibs.slice();
     ordered.splice(idx, 0, drag);
-    const orderMap = {};
+
+    const writes = [];
     ordered.forEach((n, i) => {
-      orderMap[n.id] = i + 1;
+      const order = i + 1;
+      if (n.id === dId) writes.push({ id: n.id, patch: { parent_id: newParent, order } });
+      else if (n.order !== order) writes.push({ id: n.id, patch: { order } });
     });
 
-    setItems((prev) =>
-      prev.map((i) => {
-        if (i.id === dId) return { ...i, parent_id: newParent, order: orderMap[i.id], updated_by: "You" };
-        if (orderMap[i.id]) return { ...i, order: orderMap[i.id] };
-        return i;
-      })
-    );
-    if (newParent) setCollapsed((prev) => ({ ...prev, [newParent]: false }));
     setDragId(null);
     setDropId(null);
     setDropPos(null);
     setRootDrop(false);
-    setDirty(true);
 
     const label = pos === "inside" ? `nested under "${target.title}"` : pos === "root" ? "moved to the top level" : "reordered";
-    showSuccess(`"${drag.title}" ${label}.`);
+    moveMutation.mutate(writes, { onSuccess: () => showSuccess(`"${drag.title}" ${label}.`) });
   };
 
   const nudge = (id, dir) => {
-    const node = items.find((i) => i.id === id);
+    const node = items().find((i) => i.id === id);
     const sibs = childrenOf(node.parent_id);
     const at = sibs.findIndex((i) => i.id === id);
     const to = at + dir;
@@ -113,7 +186,7 @@ export function useMenus() {
   };
 
   const indent = (id) => {
-    const node = items.find((i) => i.id === id);
+    const node = items().find((i) => i.id === id);
     const sibs = childrenOf(node.parent_id);
     const at = sibs.findIndex((i) => i.id === id);
     if (at <= 0) {
@@ -124,26 +197,12 @@ export function useMenus() {
   };
 
   const outdent = (id) => {
-    const node = items.find((i) => i.id === id);
+    const node = items().find((i) => i.id === id);
     if (!node.parent_id) {
       showWarning("Already at the top level.");
       return;
     }
     move(id, node.parent_id, "after");
-  };
-
-  const takeImage = (file) => {
-    if (!file) return;
-    if (!/^image\//.test(file.type)) {
-      setFormError("That file is not an image.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setForm((f) => ({ ...f, image: reader.result, imageName: file.name }));
-      setFormError(null);
-    };
-    reader.readAsDataURL(file);
   };
 
   const save = () => {
@@ -152,9 +211,15 @@ export function useMenus() {
       setFormError("Title is required.");
       return;
     }
-    const ord = Math.max(1, parseInt(f.order, 10) || 1);
-    const stamp = nowStamp();
-    const patch = {
+    if (!f.menu_category_id) {
+      setFormError("Choose a menu category.");
+      return;
+    }
+    if (f.id && f.parent_id && (f.parent_id === f.id || isDescendant(f.parent_id, f.id))) {
+      setFormError("That parent sits inside this item — pick another.");
+      return;
+    }
+    const payload = {
       title: f.title.trim(),
       description: f.description.trim(),
       icon: f.icon.trim(),
@@ -162,45 +227,35 @@ export function useMenus() {
       link: f.link.trim(),
       parent_id: f.parent_id || null,
       menu_category_id: f.menu_category_id,
-      order: ord,
-      updated_by: "You",
-      updated_at: stamp,
+      order: Math.max(1, parseInt(f.order, 10) || 1),
     };
-    if (f.parent_id && (f.parent_id === f.id || isDescendant(f.parent_id, f.id))) {
-      setFormError("That parent sits inside this item — pick another.");
-      return;
-    }
-    if (f.id) {
-      setItems((prev) => prev.map((i) => (i.id === f.id ? { ...i, ...patch } : i)));
-      setFormOpen(false);
-      setForm({ ...BLANK });
-      setFormError(null);
-      setDirty(true);
-      showSuccess(`Saved "${patch.title}".`);
-      return;
-    }
-    const seq = seqRef.current + 1;
-    seqRef.current = seq;
-    const item = { id: `mn-new-${seq}`, ...patch, deleted_at: null, created_by: "You", created_at: stamp };
-    setItems((prev) => prev.concat([item]));
-    setFormOpen(false);
-    setForm({ ...BLANK });
-    setFormError(null);
-    if (item.parent_id) setCollapsed((prev) => ({ ...prev, [item.parent_id]: false }));
-    setDirty(true);
-    showSuccess(`Added "${item.title}"${item.parent_id ? " as a submenu item." : " to the top level."}`);
+    saveMutation.mutate(
+      { id: f.id, payload },
+      {
+        onSuccess: () => {
+          setFormOpen(false);
+          setForm({ ...BLANK });
+          setFormError(null);
+          if (payload.parent_id) setCollapsed((prev) => ({ ...prev, [payload.parent_id]: false }));
+          showSuccess(
+            f.id ? `Saved "${payload.title}".` : `Added "${payload.title}"${payload.parent_id ? " as a submenu item." : " to the top level."}`
+          );
+        },
+        onError: (error) => {
+          const message = errorMessage(error, "Couldn't save that menu item.");
+          setFormError(message);
+        },
+      }
+    );
   };
 
   // ---- derived view ----
-  const catName = (id) => {
-    const c = MENU_CATEGORIES.find((x) => x.id === id);
-    return c ? c.name : "";
-  };
+  const catName = (id) => categories.find((c) => c.id === id)?.name || "";
 
   const q = search.trim().toLowerCase();
   const visible = (i) => (showDeleted || !i.deleted_at) && (!q || `${i.title} ${i.link || ""}`.toLowerCase().includes(q));
 
-  const scoped = live();
+  const scoped = items();
   const matches = scoped.filter(visible);
   const keep = new Set(matches.map((i) => i.id));
   if (q) {
@@ -297,7 +352,6 @@ export function useMenus() {
               description: i.description || "",
               icon: i.icon || "",
               image: i.image || "",
-              imageName: "",
               link: i.link || "",
               parent_id: i.parent_id || "",
               menu_category_id: i.menu_category_id,
@@ -306,9 +360,10 @@ export function useMenus() {
           },
           onTrash: () => {
             if (i.deleted_at) {
-              setItems((prev) => prev.map((x) => (x.id === i.id ? { ...x, deleted_at: null } : x)));
-              setDirty(true);
-              showSuccess(`Restored "${i.title}".`);
+              restoreMutation.mutate(i.id, {
+                onSuccess: () => showSuccess(`Restored "${i.title}".`),
+                onError: (error) => showError(errorMessage(error, "Couldn't restore that item.")),
+              });
             } else {
               setTrashId(i.id);
             }
@@ -342,33 +397,38 @@ export function useMenus() {
   };
   const maxDepth = activeScoped.reduce((m, i) => Math.max(m, depthOf(i) + 1), 0);
 
-  const pending = items.find((i) => i.id === trashId) || null;
-  const pendingKids = pending ? items.filter((i) => i.parent_id === pending.id && !i.deleted_at).length : 0;
+  const pending = scoped.find((i) => i.id === trashId) || null;
+  const pendingKids = pending ? scoped.filter((i) => i.parent_id === pending.id && !i.deleted_at).length : 0;
 
   const f = form;
-  const parentPool = items.filter((i) => i.menu_category_id === (f.menu_category_id || cat) && !i.deleted_at && i.id !== f.id && !isDescendant(i.id, f.id));
+  const parentPool = scoped.filter(
+    (i) => i.menu_category_id === (f.menu_category_id || cat) && !i.deleted_at && i.id !== f.id && !isDescendant(i.id, f.id)
+  );
+
+  const loading = categoriesQuery.isLoading || (!!cat && menusQuery.isLoading);
 
   return {
-    countLine: `${activeScoped.length} items in ${catName(cat)}`,
-    categoryCards: MENU_CATEGORIES.map((c) => {
-      const own = items.filter((i) => i.menu_category_id === c.id && !i.deleted_at);
-      return {
-        key: c.id,
-        name: c.name,
-        hint: c.hint,
-        countLabel: `${own.length} items`,
-        border: cat === c.id ? "var(--orange-500)" : "var(--border)",
-        bg: cat === c.id ? "var(--surface-card)" : "var(--surface-sunken)",
-        onSelect: () => {
-          setCat(c.id);
-          setSearch("");
-        },
-      };
-    }),
+    countLine: cat ? `${activeScoped.length} items in ${catName(cat)}` : "Loading…",
+    categoryCards: categories.map((c) => ({
+      key: c.id,
+      name: c.name,
+      hint: c.slug,
+      countLabel: `${counts[c.id] ?? "…"} items`,
+      border: cat === c.id ? "var(--orange-500)" : "var(--border)",
+      bg: cat === c.id ? "var(--surface-card)" : "var(--surface-sunken)",
+      onSelect: () => {
+        setCat(c.id);
+        setSearch("");
+      },
+    })),
 
     rows,
     noRows: rows.length === 0,
-    emptyMessage: q ? `Nothing in ${catName(cat)} matches "${search}".` : `${catName(cat)} has no items yet — add the first one.`,
+    emptyMessage: loading
+      ? "Loading menu items…"
+      : q
+        ? `Nothing in ${catName(cat)} matches "${search}".`
+        : `${catName(cat)} has no items yet — add the first one.`,
 
     search,
     setSearch,
@@ -383,18 +443,12 @@ export function useMenus() {
       setCollapsed(next);
     },
 
-    dirty,
-    saveOrder: () => {
-      setBaseline(items);
-      setDirty(false);
-      showSuccess("Order saved — menus table updated.");
-    },
-    revertOrder: () => {
-      setItems(baseline);
-      setDirty(false);
-      setCollapsed({});
-      showSuccess("Reverted to the last saved order.");
-    },
+    // Every drag, nudge, indent and outdent writes straight through to the
+    // API and refetches — there is no local "dirty" staging to save or
+    // revert.
+    dirty: false,
+    saveOrder: () => {},
+    revertOrder: () => {},
 
     rootDropBg: rootDrop ? "var(--orange-50)" : "var(--surface-sunken)",
     onRootDragOver: (e) => {
@@ -426,6 +480,7 @@ export function useMenus() {
     formTitle: f.id ? "Edit menu item" : "New menu item",
     formSubtitle: f.id ? `menus.${f.id}` : "Pick a category and, optionally, a parent to make it a submenu",
     formError,
+    formSaving: saveMutation.isPending,
     openCreateRoot: () => {
       setFormOpen(true);
       setFormError(null);
@@ -436,7 +491,7 @@ export function useMenus() {
       setForm({ ...BLANK });
       setFormError(null);
     },
-    categoryOptions: MENU_CATEGORIES.map((c) => ({ value: c.id, label: c.name })),
+    categoryOptions: categories.map((c) => ({ value: c.id, label: c.name })),
     parentOptions: [{ value: "", label: "No parent — top level" }].concat(
       parentPool.map((i) => ({ value: i.id, label: (i.parent_id ? "— " : "") + i.title }))
     ),
@@ -446,56 +501,42 @@ export function useMenus() {
         return;
       }
       setForm((prev) => ({ ...prev, [key]: value }));
-      if (key === "title" || key === "parent_id") setFormError(null);
+      if (key === "title" || key === "parent_id" || key === "menu_category_id") setFormError(null);
     },
-    fileRef,
-    pickImage: () => fileRef.current && fileRef.current.click(),
-    onImageFile: (e) => takeImage(e.target.files && e.target.files[0]),
-    clearImage: () => setForm((prev) => ({ ...prev, image: "", imageName: "" })),
     hasImage: !!f.image,
     imagePreviewCss: f.image ? `url("${String(f.image).replace(/"/g, "%22")}")` : "none",
     imagePlaceholderLabel: f.image ? "" : "No image",
-    uploadLabel: f.image ? "Replace image" : "Upload image",
-    imageHint: f.image ? f.imageName || f.image : "Drag a file here or upload — PNG or SVG, 96×96 for icons, 480×320 for dropdown cards.",
-    imageDropBorder: imageOver ? "var(--orange-500)" : "var(--border-strong)",
-    imageDropBg: imageOver ? "var(--orange-50)" : "var(--surface-sunken)",
-    onImageDragOver: (e) => {
-      e.preventDefault();
-      if (!imageOver) setImageOver(true);
-    },
-    onImageDragLeave: () => setImageOver(false),
-    onImageDrop: (e) => {
-      e.preventDefault();
-      setImageOver(false);
-      takeImage(e.dataTransfer.files && e.dataTransfer.files[0]);
-    },
+    clearImage: () => setForm((prev) => ({ ...prev, image: "" })),
+
     submitLabel: f.id ? "Save item" : "Add item",
     submitForm: save,
 
     trashOpen: !!pending,
     trashMessage: pending
-      ? `"${pending.title}" gets a deleted_at stamp${pendingKids ? ` along with its ${pendingKids} submenu item${pendingKids === 1 ? "" : "s"}` : ""}. You can restore it from the trash view.`
+      ? pendingKids
+        ? `"${pending.title}" still has ${pendingKids} submenu item${pendingKids === 1 ? "" : "s"}. Move or delete ${pendingKids === 1 ? "it" : "them"} first, then trash this item.`
+        : `"${pending.title}" gets moved to trash. You can restore it later from "Show trashed".`
       : "",
     cancelTrash: () => setTrashId(null),
     confirmTrash: () => {
       const id = trashId;
-      const stamp = nowStamp();
-      const ids = new Set([id]);
-      let added = true;
-      let guard = 0;
-      while (added && guard++ < 20) {
-        added = false;
-        items.forEach((i) => {
-          if (i.parent_id && ids.has(i.parent_id) && !ids.has(i.id)) {
-            ids.add(i.id);
-            added = true;
-          }
-        });
+      const target = scoped.find((i) => i.id === id);
+      const kidsCount = target ? scoped.filter((i) => i.parent_id === target.id && !i.deleted_at).length : 0;
+      if (kidsCount) {
+        showWarning("Move or delete the submenu items first.");
+        setTrashId(null);
+        return;
       }
-      setItems((prev) => prev.map((i) => (ids.has(i.id) ? { ...i, deleted_at: stamp, updated_at: stamp, updated_by: "You" } : i)));
-      setTrashId(null);
-      setDirty(true);
-      showSuccess(`Moved ${ids.size} item${ids.size === 1 ? "" : "s"} to trash.`);
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          setTrashId(null);
+          showSuccess(`Moved "${target?.title || "item"}" to trash.`);
+        },
+        onError: (error) => {
+          setTrashId(null);
+          showError(errorMessage(error, "Couldn't move that item to trash."));
+        },
+      });
     },
   };
 }

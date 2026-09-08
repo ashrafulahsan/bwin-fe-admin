@@ -59,22 +59,13 @@ export default function MenusPage() {
           onFieldChange={m.setFormField}
           categoryOptions={m.categoryOptions}
           parentOptions={m.parentOptions}
-          fileRef={m.fileRef}
-          pickImage={m.pickImage}
-          onImageFile={m.onImageFile}
           clearImage={m.clearImage}
           hasImage={m.hasImage}
           imagePreviewCss={m.imagePreviewCss}
           imagePlaceholderLabel={m.imagePlaceholderLabel}
-          uploadLabel={m.uploadLabel}
-          imageHint={m.imageHint}
-          imageDropBorder={m.imageDropBorder}
-          imageDropBg={m.imageDropBg}
-          onImageDragOver={m.onImageDragOver}
-          onImageDragLeave={m.onImageDragLeave}
-          onImageDrop={m.onImageDrop}
           formError={m.formError}
           submitLabel={m.submitLabel}
+          submitting={m.formSaving}
           onClose={m.closeForm}
           onSubmit={m.submitForm}
         />
